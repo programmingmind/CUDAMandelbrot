@@ -17,4 +17,4 @@ tests: tests.cpp datatypes.h
 	g++ $(CFLAGS) -o tests $^ -lm
 
 clean:
-	rm -f cuda.o MandelbrotCPU MandelbrotGPU
+	rm -f cuda.o MandelbrotCPU MandelbrotGPU tests
