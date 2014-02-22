@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <iostream>
 
 #define MIN_EXP 2
 
@@ -29,11 +30,22 @@ public:
       data = malloc(numBytes);
    }
 
+   Number(const Number& num) {
+      numBytes = num.numBytes;
+      data = malloc(numBytes);
+
+      memset(data, 0, numBytes);
+      memcpy(data, num.data, numBytes);
+   }
+
    ~Number() {
       free(data);
    }
 
    Number& operator=(const Number& a) {
+      if (this == &a)
+         return *this;
+
       memset(data, 0, numBytes);
       memcpy(data, a.data, std::min(numBytes, a.numBytes));
       return *this;
@@ -45,7 +57,7 @@ public:
       return *this;
    }
 
-   Number& operator+(const Number& a) {
+   Number operator+(const Number& a) {
       int resultBytes = std::max(numBytes, a.numBytes);
       Number n(log2(resultBytes));
 
@@ -77,7 +89,7 @@ public:
    }
 
    // I know there is a bug here with the subtraction carry, need a way to propagate it furthur without modifying this.data
-   Number& operator-(const Number& a) {
+   Number operator-(const Number& a) {
       int resultBytes = std::max(numBytes, a.numBytes);
       Number n(log2(resultBytes));
 
