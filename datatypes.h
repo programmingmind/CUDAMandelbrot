@@ -11,12 +11,33 @@
 
 #define MIN_EXP 2
 
-uint32_t nextBase2(uint32_t n) {
-   uint32_t num;
+#define HIGH32 0x80000000
+#define HIGH8 0x80
+#define LOWBIT 0x01
+
+inline uint32_t nextLog2(uint32_t n) {
    for (int i = 0; i < 32; i++)
-      if ((num = (1 << i)) >= n)
-         return num;
-   return num;
+      if ((1 << i) >= n)
+         return i;
+   return 31;
+}
+
+inline uint32_t nextBase2(uint32_t n) {
+   return 1 << nextLog2(n);
+}
+
+bool topBitsSet(void *data, int len, int numBits) {
+   char *d = (char *) data;
+   int bytes = numBits / 8, bits = numBits % 8;
+
+   if (numBits > len * 8)
+      return true;
+
+   for (int i = 1; i <= bytes; i++)
+      if (d[len - i] != 0)
+         return true;
+
+   return numBits > 0 && (((~((1 << (8 - numBits)) - 1)) & d[len - bytes - 1]) != 0);
 }
 
 class Number {
@@ -130,6 +151,54 @@ public:
 
    Number& operator/(const Number& a) {
       return *this;
+   }
+
+   Number operator<<(const int a) {
+      int bytes = a / 8;
+      int bits = a % 8;
+
+      int overflow = 0;
+      if (topBitsSet(data, numBytes, a))
+         overflow = bytes + (bits > 0 ? 1 : 0);
+
+      Number t(nextLog2(numBytes + overflow));
+      memset(t.data, 0, t.numBytes);
+
+      char *ptr = (char *) t.data;
+      memcpy(ptr + bytes, data, numBytes);
+
+      char mask = (~((1 << (8 - bits)) - 1));
+      char over = 0, tmp;
+      for (int i = 0; i < t.numBytes; i++) {
+         tmp = ptr[i] & mask;
+         ptr[i] <<= bits;
+         ptr[i] |= over >> (8 - bits);
+         over = tmp;
+      }
+
+      return t;
+   }
+
+   Number operator>>(const int a) {
+      int bytes = a / 8;
+      int bits = a % 8;
+
+      Number t(nextLog2(numBytes - bytes));
+      memset(t.data, 0, t.numBytes);
+
+      char *ptr = (char *) t.data;
+      memcpy(ptr, ((char *) data) + bytes, numBytes - bytes);
+
+      char mask = (1 << bits) - 1;
+      char under = 0, tmp;
+      for (int i = t.numBytes - 1; i >= 0; i--) {
+         tmp = ptr[i] & mask;
+         ptr[i] >>= bits;
+         ptr[i] |= under << (8 - bits);
+         under = tmp;
+      }
+
+      return t;
    }
 
    void trim() {
