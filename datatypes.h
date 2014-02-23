@@ -45,6 +45,19 @@ private:
    void *data;
    int numBytes;
 
+   bool compare(const Number& a, bool lt) {
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = std::max(lSize, rSize);
+      uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data;
+
+      for (int i = len - 1; i >= 0; i--) {
+         if ((i < lSize ? l[i] : 0) < (i < rSize ? r[i] : 0))
+            return lt;
+         if ((i < lSize ? l[i] : 0) > (i < rSize ? r[i] : 0))
+            return ! lt;
+      }
+      return false;
+   }
+
 public:
    Number(int exp) {
       numBytes = 1 << std::max(exp, MIN_EXP);
@@ -240,6 +253,36 @@ public:
       return n;
    }
 
+   bool operator==(const Number& a) {
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = std::max(lSize, rSize);
+      uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data;
+
+      for (int i = 0; i < len; i++)
+         if ((i < lSize ? l[i] : 0) != (i < rSize ? r[i] : 0))
+            return false;
+      return true;
+   }
+
+   bool operator!=(const Number& a) {
+      return ! operator==(a);
+   }
+
+   bool operator>(const Number& a) {
+      return compare(a, false);
+   }
+
+   bool operator<(const Number& a) {
+      return compare(a, true);
+   }
+
+   bool operator>=(const Number& a) {
+      return ! operator<(a);
+   }
+
+   bool operator<=(const Number& a) {
+      return ! operator>(a);
+   }
+
    // there must be a better way to do these functions...
    Number operator&(const uint32_t a) {
       uint32_t v = a;
@@ -260,6 +303,48 @@ public:
       Number t(&v, 4);
       const Number& r = t;
       return operator^(r);
+   }
+
+   bool operator==(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator==(r);
+   }
+
+   bool operator!=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator!=(r);
+   }
+
+   bool operator>(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator>(r);
+   }
+
+   bool operator<(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator<(r);
+   }
+
+   bool operator>=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator>=(r);
+   }
+
+   bool operator<=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator<=(r);
    }
 
    void trim() {

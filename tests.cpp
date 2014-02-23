@@ -41,5 +41,13 @@ int main() {
    free(sum);
    free(diff);
 
+   printResult("==", a == c);
+   printResult("!=", b != c);
+   printResult(">", (d<<32) > c);
+   printResult("<", b < a);
+
+   printResult("< int", b < l);
+   printResult("> int", a > r);
+
    return 0;
 }
