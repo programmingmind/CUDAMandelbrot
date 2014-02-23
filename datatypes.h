@@ -15,15 +15,19 @@
 #define HIGH8 0x80
 #define LOWBIT 0x01
 
-inline uint32_t nextLog2(uint32_t n) {
-   for (int i = 0; i < 32; i++)
-      if ((1 << i) >= n)
-         return i;
-   return 31;
+inline bool numBase2(uint32_t n) {
+   return n == 0 || ((n & (n - 1)) == 0);
 }
 
 inline uint32_t nextBase2(uint32_t n) {
-   return 1 << nextLog2(n);
+   if (numBase2(n))
+      return n;
+
+   uint32_t num;
+   for (int i = 0; i < 32; i++)
+      if ((num = (1 << i)) >= n)
+         return num;
+   return num;
 }
 
 bool topBitsSet(void *data, int len, int numBits) {
@@ -65,6 +69,38 @@ private:
       a.data = tmp;
       numBytes = a.numBytes;
       return *this;
+   }
+
+   bool isBase2() const {
+      bool base2Seen = false;
+
+      uint32_t *ptr = (uint32_t *) data;
+      int len = numBytes >> 2;
+      for (int i = 0; i < len; i++) {
+         if (ptr[i] != 0) {
+            if (numBase2(ptr[i])) {
+               if (base2Seen)
+                  return false;
+               base2Seen = true;
+            }
+            else
+               return false;
+         }
+      }
+
+      return true;
+   }
+
+   // returns exponent of first high bit
+   int binlog() const {
+      uint32_t *ptr = (uint32_t *) data;
+      int len = numBytes >> 2;
+
+      for (int i = 0; i < len; i++)
+         if (ptr[i] != 0)
+            return len*32 + log2(ptr[i]);
+
+      return 0;
    }
 
 public:
@@ -184,11 +220,45 @@ public:
          }
       }
 
+      p.trim();
       return p;
    }
 
-   Number& operator/(const Number& a) {
-      return *this;
+   Number operator/(const Number& a) {
+      // http://en.wikipedia.org/wiki/Fourier_division
+      // b_i = (r_i-1,c_i+1 - 
+      //        sum j=2 -> i of
+      //           b_i-j+1 * a_j
+      //       ) / (a_1)
+      // where b = c/a and a,b,c are 1-indexed from MSByte
+
+      if (a.isBase2())
+         return operator>>(a.binlog());
+
+      return Number(a);
+
+      // this needs to be fixed
+      // uint32_t *aPtr = (uint32_t *) a.data;
+      // uint32_t *cPtr = (uint32_t *) data;
+      // int aNdx = a.numBytes;
+
+      // while (aPtr[--aNdx] == 0) ;
+
+      // uint64_t b;
+      // uint32_t *r = (uint32_t *) malloc(a.numBytes);
+
+      // uint64_t t = (((uint64_t) cPtr[0]) << 32) | cPtr[1];
+      // b = t / aPtr[0];
+      // r[0] = t % aPtr[0];
+
+      // Number n(&b, 8);
+      // for (int i = 1; i <= aNdx; i++) {
+
+      // }
+
+      // free(r);
+      // n.trim();
+      // return n;
    }
 
    Number operator<<(const int a) {
@@ -288,9 +358,9 @@ public:
       return copyIn(operator*(a));
    }
 
-   // Number& operator/=(const Number& a) {
-   //    return copyIn(operator/(a));
-   // }
+   Number& operator/=(const Number& a) {
+      return copyIn(operator/(a));
+   }
 
    Number& operator<<=(const int a) {
       return copyIn(operator<<(a));

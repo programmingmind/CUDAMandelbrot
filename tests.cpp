@@ -11,6 +11,10 @@ int main() {
    unsigned int l = 0x56af6f4d;
    unsigned int r = 0x2308ffed;
 
+   int i = 4;
+   Number four(&i, 4);
+   Number sixteen = four<<2;
+
    Number a(4);
    Number b(4);
 
@@ -63,6 +67,11 @@ int main() {
    printResult("prod", *prodData == prod);
 
    free(prodData);
+
+   printResult("division #1", (a*b)/a == b);
+   printResult("division #2", (a*b)/b == a);
+
+   printResult("division by 2", (a*sixteen)/four == a*four);
 
    return 0;
 }
