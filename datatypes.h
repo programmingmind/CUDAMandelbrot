@@ -93,7 +93,7 @@ public:
 
       uint32_t l, r, s;
       char carry = 0;
-      for (int i = 0; i*4 < len; i++) {
+      for (int i = 0; i < len; i++) {
          l = i < lSize ? num1[i] : 0;
          r = i < rSize ? num2[i] : 0;
 
@@ -122,12 +122,14 @@ public:
       uint32_t *num1 = ((uint32_t *)data);
       uint32_t *num2 = ((uint32_t *)a.data);
 
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = resultBytes >> 2;
+
       uint32_t l, r, s;
       char carry = 0;
 
-      for (int i = 0; i*4 < resultBytes; i++) {
-         l = num1[i];
-         r = num2[i];
+      for (int i = 0; i < len; i++) {
+         l = i < lSize ? num1[i] : 0;
+         r = i < rSize ? num2[i] : 0;;
 
          if (r + carry <= l) {
             // normal subtraction
@@ -199,6 +201,65 @@ public:
       }
 
       return t;
+   }
+
+   Number operator&(const Number& a) {
+      Number n(log2(std::min(numBytes, a.numBytes)));
+
+      memset(n.data, 0, n.numBytes);
+
+      uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
+
+      for (int i = 0; i*4 < n.numBytes; i++)
+         v[i] = l[i] & r[i];
+
+      return n;
+   }
+
+   Number operator|(const Number& a) {
+      Number n(log2(std::max(numBytes, a.numBytes)));
+
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
+      uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
+
+      for (int i = 0; i < len; i++)
+         v[i] = (i < lSize ? l[i] : 0) | (i < rSize ? r[i] : 0);
+
+      return n;
+   }
+
+   Number operator^(const Number& a) {
+      Number n(log2(std::max(numBytes, a.numBytes)));
+
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
+      uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
+
+      for (int i = 0; i < len; i++)
+         v[i] = (i < lSize ? l[i] : 0) ^ (i < rSize ? r[i] : 0);
+
+      return n;
+   }
+
+   // there must be a better way to do these functions...
+   Number operator&(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator&(r);
+   }
+
+   Number operator|(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator^(r);
+   }
+
+   Number operator^(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator^(r);
    }
 
    void trim() {

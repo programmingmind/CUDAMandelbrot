@@ -16,6 +16,13 @@ int main() {
 
    Number c(&l, 4);
 
+   Number d(4);
+   d = l;
+   uint32_t *bigData = (uint32_t *) ((d<<32) | r).getData();
+
+   printResult("left shift, or 1", bigData[0] == r);
+   printResult("left shift, or 2", bigData[1] == l);
+
    a = l;
    b = r;
 
