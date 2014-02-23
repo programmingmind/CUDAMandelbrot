@@ -15,6 +15,9 @@ int main() {
    Number four(&i, 4);
    Number sixteen = four<<2;
 
+   printResult("partial shift left", four*four == sixteen);
+   printResult("partial shift right", sixteen>>2 == four);
+
    Number a(4);
    Number b(4);
 
@@ -71,7 +74,8 @@ int main() {
    printResult("division #1", (a*b)/a == b);
    printResult("division #2", (a*b)/b == a);
 
-   printResult("division by 2", (a*sixteen)/four == a*four);
+   printResult("division by power of 2", sixteen/four == four);
+   printResult("compound multiplication, division by power of 2", (a*sixteen)/four == a*four);
 
    return 0;
 }

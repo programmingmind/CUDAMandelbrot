@@ -98,7 +98,7 @@ private:
 
       for (int i = 0; i < len; i++)
          if (ptr[i] != 0)
-            return len*32 + log2(ptr[i]);
+            return i*32 + log2(ptr[i]);
 
       return 0;
    }
