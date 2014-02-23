@@ -14,7 +14,7 @@
 uint32_t nextBase2(uint32_t n) {
    uint32_t num;
    for (int i = 0; i < 32; i++)
-      if ((num = (1 << i)) > n)
+      if ((num = (1 << i)) >= n)
          return num;
    return num;
 }
@@ -30,11 +30,16 @@ public:
       data = malloc(numBytes);
    }
 
+   Number(void *bytes, int len) {
+      numBytes = nextBase2(len);
+      data = calloc(len, 1);
+      memcpy(data, bytes, len);
+   }
+
    Number(const Number& num) {
       numBytes = num.numBytes;
       data = malloc(numBytes);
 
-      memset(data, 0, numBytes);
       memcpy(data, num.data, numBytes);
    }
 
@@ -152,6 +157,10 @@ public:
       void *ptr = malloc(numBytes);
       memcpy(ptr, data, numBytes);
       return ptr;
+   }
+
+   int getSize() {
+      return numBytes;
    }
 };
 
