@@ -178,9 +178,9 @@ public:
       uint64_t prod;
       for (int i = 0; i < lSize; i++) {
          for (int j = 0; j < rSize; j++) {
-            prod = num1[i] * num2[j];
+            prod = ((uint64_t) num1[i]) * ((uint64_t) num2[j]);
             Number t(&prod, 8);
-            p += (t << (i + j));
+            p += (t << ((i + j) * 32));
          }
       }
 
