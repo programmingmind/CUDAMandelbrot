@@ -8,23 +8,32 @@ void printResult(std::string prefix, bool b) {
 }
 
 int main() {
+   unsigned int l = 0x56af6f4d;
+   unsigned int r = 0x2308ffed;
+
    Number a(4);
    Number b(4);
 
-   unsigned int l = 0x56af6f4d;
-   unsigned int r = 0x2308ffed;
+   a = l;
+   b = r;
 
    Number c(&l, 4);
 
    Number d(4);
    d = l;
+
    uint32_t *bigData = (uint32_t *) ((d<<32) | r).getData();
 
    printResult("left shift, or 1", bigData[0] == r);
    printResult("left shift, or 2", bigData[1] == l);
+   free(bigData);
 
-   a = l;
-   b = r;
+   Number n(&l, 4);
+   n += b;
+   uint32_t *nData = (uint32_t *) n.getData();
+   printResult("+=", *nData == (l+r));
+   printResult("+= == +", n == (a + b));
+   free(nData);
 
    uint32_t *cData = (uint32_t *) c.getData(), *aData = (uint32_t *) a.getData();
 
@@ -48,6 +57,12 @@ int main() {
 
    printResult("< int", b < l);
    printResult("> int", a > r);
+
+   uint64_t prod = 0xbdd085c01afbd49ULL;
+   uint64_t *prodData = (uint64_t *) (a*b).getData();
+   printResult("prod", *prodData == prod);
+
+   free(prodData);
 
    return 0;
 }

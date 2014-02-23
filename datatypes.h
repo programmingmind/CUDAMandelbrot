@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <iostream>
 
-#define MIN_EXP 2
+#define MIN_BYTES 4
 
 #define HIGH32 0x80000000
 #define HIGH8 0x80
@@ -58,9 +58,18 @@ private:
       return false;
    }
 
+   inline Number& copyIn(Number a) {
+      // the deallocater frees the pointer so just swap the pointers to handle the memory properly
+      void *tmp = data;
+      data = a.data;
+      a.data = tmp;
+      numBytes = a.numBytes;
+      return *this;
+   }
+
 public:
-   Number(int exp) {
-      numBytes = 1 << std::max(exp, MIN_EXP);
+   Number(int bytes) {
+      numBytes = nextBase2(std::max(bytes, MIN_BYTES));
       data = malloc(numBytes);
    }
 
@@ -97,10 +106,9 @@ public:
    }
 
    Number operator+(const Number& a) {
-      int resultBytes = std::max(numBytes, a.numBytes);
-      Number n(log2(resultBytes));
+      Number n(std::max(numBytes, a.numBytes));
 
-      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = resultBytes >> 2;
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
       uint32_t *num1 = ((uint32_t *)data);
       uint32_t *num2 = ((uint32_t *)a.data);
 
@@ -117,9 +125,9 @@ public:
       }
 
       if (carry > 0) {
-         Number t(log2(resultBytes) + 1);
-         t = n;
-         ((uint32_t *)t.data)[resultBytes/4] = carry;
+         Number t(n.numBytes + 1);
+         memcpy(t.data, n.data, n.numBytes);
+         ((uint32_t *)t.data)[len] = carry;
 
          return t;
       }
@@ -129,13 +137,12 @@ public:
 
    // I know there is a bug here with the subtraction carry, need a way to propagate it furthur without modifying this.data
    Number operator-(const Number& a) {
-      int resultBytes = std::max(numBytes, a.numBytes);
-      Number n(log2(resultBytes));
+      Number n(std::max(numBytes, a.numBytes));
 
       uint32_t *num1 = ((uint32_t *)data);
       uint32_t *num2 = ((uint32_t *)a.data);
 
-      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = resultBytes >> 2;
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
 
       uint32_t l, r, s;
       char carry = 0;
@@ -160,8 +167,24 @@ public:
       return n;
    }
 
-   Number& operator*(const Number& a) {
-      return *this;
+   Number operator*(const Number& a) {
+      Number p(numBytes + a.numBytes);
+      memset(p.data, 0, p.numBytes);
+
+      uint32_t *num1 = ((uint32_t *)data);
+      uint32_t *num2 = ((uint32_t *)a.data);
+
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2;
+      uint64_t prod;
+      for (int i = 0; i < lSize; i++) {
+         for (int j = 0; j < rSize; j++) {
+            prod = num1[i] * num2[j];
+            Number t(&prod, 8);
+            p += (t << (i + j));
+         }
+      }
+
+      return p;
    }
 
    Number& operator/(const Number& a) {
@@ -176,7 +199,7 @@ public:
       if (topBitsSet(data, numBytes, a))
          overflow = bytes + (bits > 0 ? 1 : 0);
 
-      Number t(nextLog2(numBytes + overflow));
+      Number t(numBytes + overflow);
       memset(t.data, 0, t.numBytes);
 
       char *ptr = (char *) t.data;
@@ -198,7 +221,7 @@ public:
       int bytes = a / 8;
       int bits = a % 8;
 
-      Number t(nextLog2(numBytes - bytes));
+      Number t(numBytes - bytes);
       memset(t.data, 0, t.numBytes);
 
       char *ptr = (char *) t.data;
@@ -217,7 +240,7 @@ public:
    }
 
    Number operator&(const Number& a) {
-      Number n(log2(std::min(numBytes, a.numBytes)));
+      Number n(std::min(numBytes, a.numBytes));
 
       memset(n.data, 0, n.numBytes);
 
@@ -230,7 +253,7 @@ public:
    }
 
    Number operator|(const Number& a) {
-      Number n(log2(std::max(numBytes, a.numBytes)));
+      Number n(std::max(numBytes, a.numBytes));
 
       int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
       uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
@@ -242,7 +265,7 @@ public:
    }
 
    Number operator^(const Number& a) {
-      Number n(log2(std::max(numBytes, a.numBytes)));
+      Number n(std::max(numBytes, a.numBytes));
 
       int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
       uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
@@ -251,6 +274,54 @@ public:
          v[i] = (i < lSize ? l[i] : 0) ^ (i < rSize ? r[i] : 0);
 
       return n;
+   }
+
+   Number& operator+=(const Number& a) {
+      return copyIn(operator+(a));
+   }
+
+   Number& operator-=(const Number& a) {
+      return copyIn(operator-(a));
+   }
+
+   Number& operator*=(const Number& a) {
+      return copyIn(operator*(a));
+   }
+
+   // Number& operator/=(const Number& a) {
+   //    return copyIn(operator/(a));
+   // }
+
+   Number& operator<<=(const int a) {
+      return copyIn(operator<<(a));
+   }
+
+   Number& operator>>=(const int a) {
+      return copyIn(operator>>(a));
+   }
+
+   Number& operator&=(const Number& a) {
+      return copyIn(operator&(a));
+   }
+
+   Number& operator|=(const Number& a) {
+      return copyIn(operator|(a));
+   }
+
+   Number& operator^=(const Number& a) {
+      return copyIn(operator^(a));
+   }
+
+   Number& operator&=(const uint32_t a) {
+      return copyIn(operator&(a));
+   }
+
+   Number& operator|=(const uint32_t a) {
+      return copyIn(operator|(a));
+   }
+
+   Number& operator^=(const uint32_t a) {
+      return copyIn(operator^(a));
    }
 
    bool operator==(const Number& a) {
@@ -358,7 +429,7 @@ public:
          }
       }
 
-      int newBytes = std::max(nextBase2(used), (uint32_t) MIN_EXP);
+      int newBytes = std::max(nextBase2(used), (uint32_t) MIN_BYTES);
       if (newBytes < numBytes) {
          void *smaller = malloc(newBytes);
          memcpy(smaller, data, newBytes);
@@ -386,7 +457,7 @@ private:
 
 public:
    Decimal(int exp) {
-      numBytes = 1 << std::max(exp, MIN_EXP);
+      numBytes = std::max(1 << exp, MIN_BYTES);
       data = malloc(numBytes);
    }
 
