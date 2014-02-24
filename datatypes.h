@@ -275,8 +275,8 @@ public:
       char *ptr = (char *) t.data;
       memcpy(ptr + bytes, data, numBytes);
 
-      char mask = (~((1 << (8 - bits)) - 1));
-      char over = 0, tmp;
+      unsigned char mask = (~((1 << (8 - bits)) - 1));
+      unsigned char over = 0, tmp;
       for (int i = 0; i < t.numBytes; i++) {
          tmp = ptr[i] & mask;
          ptr[i] <<= bits;
@@ -294,11 +294,11 @@ public:
       Number t(numBytes - bytes);
       memset(t.data, 0, t.numBytes);
 
-      char *ptr = (char *) t.data;
+      unsigned char *ptr = (unsigned char *) t.data;
       memcpy(ptr, ((char *) data) + bytes, numBytes - bytes);
 
-      char mask = (1 << bits) - 1;
-      char under = 0, tmp;
+      unsigned char mask = (1 << bits) - 1;
+      unsigned char under = 0, tmp;
       for (int i = t.numBytes - 1; i >= 0; i--) {
          tmp = ptr[i] & mask;
          ptr[i] >>= bits;

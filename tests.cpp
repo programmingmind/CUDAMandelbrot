@@ -79,6 +79,29 @@ int main() {
    printResult("division #1", (a*b)/a == b);
    printResult("division #2", (a*b)/b == a);
 
+   uint64_t prod16 = 0x56af6f4d0ULL;
+   Number n16(&prod16, 8);
+
+   uint64_t *shiftData = (uint64_t *) (a<<4).getData();
+   printResult("32 bit value << partial byte", *shiftData == prod16);
+   free(shiftData);
+
+   uint32_t *rShiftData = (uint32_t *) (n16>>4).getData();
+   printResult("shift it back right", *rShiftData == l);
+   free(rShiftData);
+
+   rShiftData = (uint32_t *) (n16>>12).getData();
+   printResult("shift right over a byte", *rShiftData == (l >> 8));
+   free(rShiftData);
+
+   uint64_t *prod16Data = (uint64_t *) (a*sixteen).getData();
+   printResult("prod16", *prod16Data == prod16);
+   free(prod16Data);
+
+   prod16Data = (uint64_t *) (a*16).getData();
+   printResult("prod16 int", *prod16Data == prod16);
+   free(prod16Data);
+
    printResult("division by power of 2", sixteen/four == four);
    printResult("compound multiplication, division by power of 2", (a*sixteen)/four == a*four);
 
