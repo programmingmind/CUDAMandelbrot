@@ -18,6 +18,11 @@ int main() {
    printResult("partial shift left", four*four == sixteen);
    printResult("partial shift right", sixteen>>2 == four);
 
+   printResult("integer addition", four+12 == sixteen);
+   printResult("integer subtraction", sixteen - 12 == four);
+   printResult("integer multiplication", four*4 == sixteen);
+   printResult("integer division", sixteen / 4 == four);
+
    Number a(4);
    Number b(4);
 

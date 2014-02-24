@@ -425,6 +425,62 @@ public:
    }
 
    // there must be a better way to do these functions...
+   Number operator+(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator+(r);
+   }
+
+   Number operator-(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator-(r);
+   }
+
+   Number operator*(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator*(r);
+   }
+
+   Number operator/(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator/(r);
+   }
+
+   Number operator+=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator+=(r);
+   }
+
+   Number operator-=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator-=(r);
+   }
+
+   Number operator*=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator*=(r);
+   }
+
+   Number operator/=(const uint32_t a) {
+      uint32_t v = a;
+      Number t(&v, 4);
+      const Number& r = t;
+      return operator/=(r);
+   }
+
    Number operator&(const uint32_t a) {
       uint32_t v = a;
       Number t(&v, 4);
