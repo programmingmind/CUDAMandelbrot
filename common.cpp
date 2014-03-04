@@ -7,7 +7,39 @@ inline uint32_t getColor(uint32_t it) {
    return B<<2 | G<<11 | R<<19;
 }
 
-void saveImage(char *name, uint32_t *iters) {
+int findCurrentRun() {
+   struct stat st;
+
+   int run = 0;
+   if (stat("images", &st) == -1) {
+      printf("images folder missing, creating it now\n");
+      mkdir("images", 0755);
+   } else {
+      printf("looking for previous runs...\n");
+
+      DIR *dir = opendir("images");
+
+      struct dirent *entry = readdir(dir);
+      while (entry) {
+         if (entry->d_type == DT_DIR)
+            if (strncmp("run_", entry->d_name, 4) == 0)
+               run++;
+
+         entry = readdir(dir);
+      }
+
+      closedir(dir);
+   }
+
+   char path[16];
+   sprintf(path, "images/run_%04d", run);
+
+   printf("creating folder %s for images\n", path);
+   mkdir(path, 0755);
+   return run;
+}
+
+void saveImage(int run, int len, int num, uint32_t *iters) {
    char bfType1=0x42;
    char bfType2=0x4D;
    char bfSize[4]={0x00,0x00,0x00,0x00}; 
@@ -33,6 +65,9 @@ void saveImage(char *name, uint32_t *iters) {
    char biYPelsPerMeter[4]={0x00,0x00,0x00,0x00};
    char biClrUsed[4]={0x00,0x00,0x00,0x00};
    char biClrImportant[4]={0x00,0x00,0x00,0x00};
+
+   char name[32];
+   sprintf(name, "images/run_%04d/%0*d.bmp", run, len, num);
 
    fstream image;
    image.open (name, fstream::binary | fstream::out);

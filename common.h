@@ -2,6 +2,11 @@
 #define COMMON_H
 
 #include <inttypes.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include <algorithm>
 #include <cmath>
@@ -29,7 +34,9 @@ typedef struct {
 
 uint32_t getColor(uint32_t it);
 
-void saveImage(char *name, uint32_t *iters);
+int findCurrentRun();
+
+void saveImage(int run, int len, int num, uint32_t *iters);
 
 bool BetterZoom(double oMean, double oVar, double nMean, double nVar);
 
