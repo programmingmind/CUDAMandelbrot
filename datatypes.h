@@ -104,6 +104,11 @@ private:
    }
 
 public:
+   Number() {
+      numBytes = MIN_BYTES;
+      data = malloc(numBytes);
+   }
+
    Number(int bytes) {
       numBytes = nextBase2(std::max(bytes, MIN_BYTES));
       data = malloc(numBytes);
@@ -578,17 +583,114 @@ public:
 
 class Decimal {
 private:
-   void *data;
-   int numBytes;
+   bool negative;
+   int32_t exponent;
+   Number mantissa;
 
 public:
-   Decimal(int exp) {
-      numBytes = std::max(1 << exp, MIN_BYTES);
-      data = malloc(numBytes);
+   Decimal(unsigned int i) {
+      negative = false;
+      exponent = 0;
+      mantissa = i;
    }
 
-   ~Decimal() {
-      free(data);
+   Decimal(float f) {
+      negative = false;
+      exponent = 0;
+      mantissa = 0;
+   }
+
+   Decimal(double d) {
+      negative = false;
+      exponent = 0;
+      mantissa = 0;
+   }
+
+   Decimal(Number &n) {
+      negative = false;
+      exponent = 0;
+      mantissa = n;
+   }
+
+   Decimal(const Decimal& d) {
+      negative = d.negative;
+      exponent = d.exponent;
+      mantissa = d.mantissa;
+   }
+
+   Decimal operator+(const Decimal& a) {
+      if (exponent != a.exponent) {
+         Decimal tmp((exponent < a.exponent) ? *this : a);
+         tmp.mantissa <<= abs(a.exponent - exponent);
+         tmp.exponent = std::max(exponent, a.exponent);
+
+         return (exponent < a.exponent) ? (tmp + a) : (operator+(tmp));
+      }
+
+      Decimal tmp(a);
+      if (negative == a.negative) {
+         tmp.mantissa += mantissa;
+      } else {
+         if (mantissa == a.mantissa)
+            return Decimal((unsigned int) 0);
+         else if (mantissa < a.mantissa) {
+            tmp.negative = a.negative;
+            tmp.mantissa -= mantissa;
+         }
+         else {
+            tmp.negative = negative;
+            tmp.mantissa = mantissa - a.mantissa;
+         }
+      }
+
+      return tmp;
+   }
+
+   Decimal operator-(const Decimal& a) {
+      if (exponent != a.exponent) {
+         Decimal tmp((exponent < a.exponent) ? *this : a);
+         tmp.mantissa <<= abs(a.exponent - exponent);
+         tmp.exponent = std::max(exponent, a.exponent);
+
+         return (exponent < a.exponent) ? (tmp - a) : (operator-(tmp));
+      }
+
+      Decimal tmp(a);
+      if (negative == a.negative) {
+         if (mantissa == a.mantissa)
+            return Decimal((unsigned int) 0);
+         else if (mantissa < a.mantissa) {
+            tmp.negative = !negative;
+            tmp.mantissa -= mantissa;
+         } else {
+            tmp.mantissa += mantissa;
+         }
+      } else {
+         tmp.negative = negative;
+         tmp.mantissa += mantissa;
+      }
+
+      return tmp;
+   }
+
+   Decimal operator*(const Decimal& a) {
+      Decimal tmp(a);
+
+      tmp.negative ^= negative;
+      tmp.exponent += exponent;
+      tmp.mantissa *= mantissa;
+      
+      return tmp;
+   }
+
+   Decimal operator/(const Decimal& a) {
+      Decimal tmp(*this);
+
+      tmp.negative ^= a.negative;
+      tmp.exponent -= a.exponent;
+      tmp.mantissa /= a.mantissa;
+
+      return tmp;
    }
 };
 
