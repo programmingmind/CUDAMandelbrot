@@ -28,6 +28,12 @@ def comb(l, base):
     return n
 
 def div(dividend, divisor, base, trunc, round = False):
+    if divisor == 0:
+        return -1
+
+    if dividend == 0:
+        return 0
+    
     c, cExt = split(dividend, base)
     a, aExt = split(divisor, base)
 
@@ -56,6 +62,12 @@ def div(dividend, divisor, base, trunc, round = False):
 
 def test(dividend, divisor, base = 10, trunc = True):
     dq = div(dividend, divisor, base, trunc)
+
+    if divisor == 0:
+        print("divide by 0")
+        print("handled " + ("correctly" if dq == -1 else "incorrectly"))
+        return
+    
     q = dividend/divisor
     if (trunc):
         q = int(q)
@@ -82,3 +94,5 @@ for base in bases:
     test(12345678, 123, base)
     test(12345678, 12345, base)
     test(12345678, 1234567, base)
+    test(0, 76476467, base)
+    test(87897498732, 0, base)
