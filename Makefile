@@ -16,5 +16,8 @@ cuda: $(COMMON) cuda.cu
 tests: tests.cpp datatypes.h
 	g++ $(CCFLAGS) -o tests $^ -lm
 
+div: fourierDivision.cpp
+	g++ $(CCFLAGS) -o fd $^
+
 clean:
-	rm -f cuda.o MandelbrotCPU MandelbrotGPU tests
+	rm -f cuda.o MandelbrotCPU MandelbrotGPU tests fd
