@@ -13,7 +13,7 @@ def comb(l):
         n = n*100 + e
     return n
 
-def div(dividend, divisor):
+def div(dividend, divisor, trunc = True, round = False):
     c = split(dividend)
     a = split(divisor)
 
@@ -38,18 +38,27 @@ def div(dividend, divisor):
     res = comb(b) * factor
     if (len(a) >= len(c)):
         res /= (100**(1 + len(a) - len(c)))
+
+    if (trunc):
+        return int(res) + (1 if round and r >= 50 else 0)
+
     return res
 
-def test(dividend, divisor):
-    print(str(dividend) + " / " + str(divisor) + " = " + str(dividend/divisor))
-    q = div(dividend, divisor)
-    if (q == dividend/divisor):
+def test(dividend, divisor, trunc = True):
+    dq = div(dividend, divisor, trunc)
+    q = dividend/divisor
+    if (trunc):
+        q = int(q)
+
+    print(str(dividend) + " / " + str(divisor) + " = " + str(q))
+    
+    if (dq == q):
         print("pass")
     else:
-        print("fail: " + str(q))
+        print("fail: " + str(dq))
 
 test(499084777422, 6534)
-test(100000, 314159)
+test(100000, 314159, False)
 test(875352, 6543)
 test(876342615243, 73524377)
 test(654, 23)
