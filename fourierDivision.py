@@ -1,6 +1,8 @@
+MAX_ERROR = 10**-7
+
 def split(n, base):
     t = []
-    extra = False
+    extra = 0
     
     while (n > 0):
         t.insert(0, n % base)
@@ -8,13 +10,14 @@ def split(n, base):
 
     if (len(t) % 2 == 1):
         t.append(0)
-        extra = True
+        extra += 1
 
     a = []
     for i in range(0, len(t), 2):
         a.append(t[i] * base + t[i + 1])
     if (len(a) == 1):
         a.append(0)
+        extra += 2
 
     return a, extra
 
@@ -28,11 +31,7 @@ def div(dividend, divisor, base, trunc, round = False):
     c, cExt = split(dividend, base)
     a, aExt = split(divisor, base)
 
-    factor = 1
-    if aExt:
-        factor *= base
-    if cExt:
-        factor /= base
+    factor = base**(aExt - cExt)
     
     b = []
     tmp = (c[0] * (base**2) + c[1])
@@ -62,15 +61,13 @@ def test(dividend, divisor, base = 10, trunc = True):
         q = int(q)
 
     print(str(dividend) + " / " + str(divisor) + " = " + str(q))
-    
-    if (dq == q):
-        print("pass")
-    else:
-        print("fail: " + str(dq) + " diff : " + str(abs(dq - q)))
+    err = abs(dq - q)
+
+    print(("pass" if err < MAX_ERROR else "fail") + " error: " + str(err))
 
     print()
 
-bases = [10, 16, 32768]
+bases = [10, 16, 32768, 65536]
 for base in bases:
     print("Testing with base: " + str(base) + "\n")
     
