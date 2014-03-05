@@ -4,7 +4,7 @@ LDFLAGS=-L/usr/local/cuda/lib64 -lcuda -lcudart
 
 COMMON=mandelbrot.cpp common.cpp common.h
 
-all: cpu cuda tests
+all: cpu cuda tests div
 
 cpu: $(COMMON) cpu.cpp
 	g++ $(CCFLAGS) -o MandelbrotCPU $^
