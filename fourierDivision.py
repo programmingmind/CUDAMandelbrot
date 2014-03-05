@@ -55,10 +55,18 @@ def test(dividend, divisor, trunc = True):
     if (dq == q):
         print("pass")
     else:
-        print("fail: " + str(dq))
+        print("fail: " + str(dq) + " diff : " + str(abs(dq - q)))
+
+    print()
 
 test(499084777422, 6534)
 test(100000, 314159, False)
 test(875352, 6543)
 test(876342615243, 73524377)
 test(654, 23)
+test(87897432432, 67676237)
+test(6633554627152354545, 856352525354556)
+test(100000000000, 314159265359, False)
+test(12345678, 123)
+test(12345678, 12345)
+test(12345678, 1234567)
