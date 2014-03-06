@@ -32,7 +32,6 @@ void printList(const VecObject &v) {
    cout << endl;
 }
 
-// need check for 0
 pair<vector<uint32_t>, int> split(uint64_t number) {
    vector<uint32_t> t;
    int extra = 0;

@@ -8,6 +8,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <utility>
+#include <vector>
 
 #define MIN_BYTES 4
 
@@ -45,6 +47,13 @@ bool topBitsSet(void *data, int len, int numBits) {
          return true;
 
    return numBits > 0 && (((~((1 << (8 - numBits)) - 1)) & d[len - bytes - 1]) != 0);
+}
+
+uint32_t unsignedAbs(int64_t i) {
+   if (i < 0)
+      i *= -1;
+
+   return *((uint32_t *) ((void *) &i));
 }
 
 class Number {
@@ -104,6 +113,67 @@ private:
             return i*32 + log2(ptr[i]);
 
       return 0;
+   }
+
+   bool nonZero() const {
+      uint32_t *ptr = (uint32_t *) data;
+      int len = numBytes >> 2;
+
+      while (len--)
+         if (ptr[len])
+            return true;
+
+      return false;
+   }
+
+   std::pair<std::vector<uint32_t>, int> split() const {
+      std::vector<uint32_t> t;
+      int extra = 0;
+
+      Number tmp(*this);
+
+      while (tmp.nonZero()) { // since BASE is 2^n we can optimize this into bit ops
+         t.insert(t.begin(), tmp.getLSU32());
+         tmp /= BASE;
+      }
+
+      if (t.size() % 2 == 1) {
+         t.push_back(0);
+         extra++;
+      }
+
+      std::vector<uint32_t> a;
+      for (int i = 0; i < t.size(); i += 2)
+         a.push_back(t[i] * BASE + t[i + 1]);
+
+      if (a.size() == 1) {
+         a.push_back(0);
+         extra += 2;
+      }
+
+      return std::make_pair(a, extra);
+   }
+
+   static Number comb(std::vector<int64_t> l) {
+      Number n(4 * (int)(l.end() - l.begin()));
+      memset(n.data, 0, n.numBytes);
+
+      for (std::vector<int64_t>::iterator it = l.begin(); it != l.end(); it++) {
+         n <<= 32;
+         bool sub = *it < 0;
+         uint32_t val = unsignedAbs(*it);
+
+         if (sub)
+            n -= val;
+         else
+            n += val;
+      }
+
+      return n;
+   }
+
+   uint32_t getLSU32() const {
+      return *((uint32_t *) data);
    }
 
 public:
@@ -231,41 +301,55 @@ public:
       return p;
    }
 
-   Number operator/(const Number& a) {
-      // http://en.wikipedia.org/wiki/Fourier_division
-      // b_i = (r_i-1,c_i+1 - 
-      //        sum j=2 -> i of
-      //           b_i-j+1 * a_j
-      //       ) / (a_1)
-      // where b = c/a and a,b,c are 1-indexed from MSByte
+   Number operator/(const Number& aN) {
+      if (! (nonZero() && aN.nonZero())) {
+         return *this;
+      }
 
-      if (a.isBase2())
-         return operator>>(a.binlog());
+      if (aN.isBase2())
+         return operator>>(aN.binlog());
 
-      return Number(a);
+      std::pair<std::vector<uint32_t>, int> t;
 
-      // this needs to be fixed
-      // uint32_t *aPtr = (uint32_t *) a.data;
-      // uint32_t *cPtr = (uint32_t *) data;
-      // int aNdx = a.numBytes;
+      t = aN.split();
+      std::vector<uint32_t> a = t.first;
+      int aExt = t.second;
 
-      // while (aPtr[--aNdx] == 0) ;
+      t = split();
+      std::vector<uint32_t> c = t.first;
+      int cExt = t.second;
 
-      // uint64_t b;
-      // uint32_t *r = (uint32_t *) malloc(a.numBytes);
+      std::vector<int64_t> b;
+      int64_t tmp = c[0] * BASE_SQR + c[1];
+      b.push_back(tmp / a[0]);
+      int64_t r = tmp % a[0];
 
-      // uint64_t t = (((uint64_t) cPtr[0]) << 32) | cPtr[1];
-      // b = t / aPtr[0];
-      // r[0] = t % aPtr[0];
+      int limit = c.size() - a.size() + 1;
+      for (int i = 2; i < limit; i++) {
+         tmp = r * BASE_SQR + c[i];
 
-      // Number n(&b, 8);
-      // for (int i = 1; i <= aNdx; i++) {
+         for (int j = 1; j < a.size() && j < i; j++)
+            tmp -= a[j] * b[i - j - 1];
 
-      // }
+         b.push_back(tmp / a[0]);
+         r = tmp % a[0];
+      }
 
-      // free(r);
-      // n.trim();
-      // return n;
+      // double scale = pow(BASE, (aExt - cExt) - 2 * max(0, (int) (1 + a.size() - c.size())));
+      // if (trunc)
+      //    *((uint64_t *) res) = comb(b) * scale;
+      // else
+      //    *((double *) res) = comb(b) * scale;
+
+      Number n = comb(b);
+      int shift = 16 * (aExt - cExt) - 2 * std::max(0, (int) (1 + a.size() - c.size()));
+
+      if (shift == 0)
+         return n;
+      else if (shift > 0)
+         return n << shift;
+      else
+         return n >> (-1 * shift);
    }
 
    Number operator<<(const int a) {
