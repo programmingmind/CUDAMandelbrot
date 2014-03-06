@@ -15,6 +15,9 @@
 #define HIGH8 0x80
 #define LOWBIT 0x01
 
+#define BASE 65536
+#define BASE_SQR 4294967296ULL
+
 inline bool numBase2(uint32_t n) {
    return n == 0 || ((n & (n - 1)) == 0);
 }
@@ -114,7 +117,7 @@ public:
       data = malloc(numBytes);
    }
 
-   Number(void *bytes, int len) {
+   Number(const void *bytes, int len) {
       numBytes = nextBase2(len);
       data = calloc(len, 1);
       memcpy(data, bytes, len);
@@ -176,7 +179,6 @@ public:
       return n;
    }
 
-   // I know there is a bug here with the subtraction carry, need a way to propagate it furthur without modifying this.data
    Number operator-(const Number& a) {
       Number n(std::max(numBytes, a.numBytes));
 
@@ -190,11 +192,11 @@ public:
 
       for (int i = 0; i < len; i++) {
          l = i < lSize ? num1[i] : 0;
-         r = i < rSize ? num2[i] : 0;;
+         r = i < rSize ? num2[i] : 0;
 
          if (r + carry <= l) {
             // normal subtraction
-            s = l -r;
+            s = l - r - carry;
             carry = 0;
          } else {
             // l - r == -1 * (r - l)
@@ -429,122 +431,124 @@ public:
       return ! operator>(a);
    }
 
+   Number operator%(const uint32_t a) {
+      uint32_t *d = (uint32_t *) data;
+      int len = numBytes >> 2;
+      uint64_t mod = 0;
+
+      while (len--)
+         mod = ((mod<<32) + d[len]) % a;
+
+      Number n(&mod, 4);
+
+      return n;
+   }
+
    // there must be a better way to do these functions...
    Number operator+(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator+(r);
    }
 
    Number operator-(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator-(r);
    }
 
    Number operator*(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
+      const Number& r = t;
+      return operator*(r);
+   }
+
+   Number operator*(const uint64_t a) {
+      Number t(&a, 8);
       const Number& r = t;
       return operator*(r);
    }
 
    Number operator/(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator/(r);
    }
 
    Number operator+=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator+=(r);
    }
 
    Number operator-=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator-=(r);
    }
 
    Number operator*=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator*=(r);
    }
 
    Number operator/=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator/=(r);
    }
 
    Number operator&(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator&(r);
    }
 
    Number operator|(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator^(r);
    }
 
    Number operator^(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator^(r);
    }
 
    bool operator==(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator==(r);
    }
 
    bool operator!=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator!=(r);
    }
 
    bool operator>(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator>(r);
    }
 
    bool operator<(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator<(r);
    }
 
    bool operator>=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator>=(r);
    }
 
    bool operator<=(const uint32_t a) {
-      uint32_t v = a;
-      Number t(&v, 4);
+      Number t(&a, 4);
       const Number& r = t;
       return operator<=(r);
    }

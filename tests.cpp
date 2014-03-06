@@ -20,7 +20,7 @@ int main() {
 
    printResult("integer addition", four+12 == sixteen);
    printResult("integer subtraction", sixteen - 12 == four);
-   printResult("integer multiplication", four*4 == sixteen);
+   printResult("integer multiplication", four* ((uint32_t)4) == sixteen);
    printResult("integer division", sixteen / 4 == four);
 
    Number a(4);
@@ -98,12 +98,28 @@ int main() {
    printResult("prod16", *prod16Data == prod16);
    free(prod16Data);
 
-   prod16Data = (uint64_t *) (a*16).getData();
+   prod16Data = (uint64_t *) (a*((uint32_t)16)).getData();
    printResult("prod16 int", *prod16Data == prod16);
    free(prod16Data);
 
    printResult("division by power of 2", sixteen/four == four);
    printResult("compound multiplication, division by power of 2", (a*sixteen)/four == a*four);
+
+   // Mersenne prime for modulus M_89 = 1<<89 - 1
+   uint32_t zero = 0;
+   Number mod(&zero, 4);
+   mod += 1;
+   mod <<= 89;
+   mod -= 1;
+
+   uint32_t div = 3465847321LL;
+   uint32_t remainder = 3191376254LL;
+
+   printResult("modulus with remainder", mod % div == remainder);
+   
+   mod &= 0;
+   mod += 1024;
+   printResult("modulus without remainder", mod % 32 == 0);
 
    return 0;
 }
