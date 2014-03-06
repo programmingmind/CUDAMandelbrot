@@ -6,14 +6,18 @@
 #include "cpu.h"
 #endif
 
-void updateScreen(int len, int gen, int saved) {
-   printf("\rgenerated: %*d / %d\tsaved: %*d / %d", len, gen, DEPTH, len, saved, DEPTH);
+void updateScreen(int len, int xLen, int yLen, int gen, int xNdx, int yNdx) {
+   printf("\rgenerated: %*d / %d\tzoom: ( %*d , %*d )", len, gen, DEPTH, xLen, xNdx, yLen, yNdx);
    fflush(stdout);
 }
 
 int main(int argc, char* argv[]) {
    int run = findCurrentRun();
    int len = ceil(log10(double (DEPTH)));
+   int wLen = ceil(log10(double (WIDTH)));
+   int hLen = ceil(log10(double (WIDTH)));
+
+   int xNdx = WIDTH / 2, yNdx = HEIGHT / 2;
 
    data_t startX = -1.50;
 	data_t startY = -1.00;
@@ -22,15 +26,13 @@ int main(int argc, char* argv[]) {
 	uint32_t iters[WIDTH * HEIGHT];
 
    printf("\n");
-   updateScreen(len, 0, 0);
+   updateScreen(len, wLen, hLen, 0, xNdx, yNdx);
    for (int i = 0; i < DEPTH; i++) {
 	   Mandelbrot(startX, startY, resolution, iters);
-      updateScreen(len, i + 1, i);
-
 		saveImage(run, len, i, iters);
-      updateScreen(len, i + 1, i + 1);
+		findPath(iters, &startX, &startY, &resolution, &xNdx, &yNdx);
 
-		findPath(iters, &startX, &startY, &resolution);
+      updateScreen(len, wLen, hLen, i + 1, xNdx, yNdx);
 	}
 
    printf("\n");

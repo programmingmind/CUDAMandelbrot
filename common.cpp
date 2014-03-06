@@ -155,7 +155,7 @@ void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int c
    }
 }
 
-void findPath(uint32_t *iters, double *startX, double *startY, double *resolution) {
+void findPath(uint32_t *iters, double *startX, double *startY, double *resolution, int *xNdx, int *yNdx) {
    int count;
    uint32_t subIter[(2*STD_DEV_RADIUS+1)*(2*STD_DEV_RADIUS+1)];
    
@@ -176,6 +176,9 @@ void findPath(uint32_t *iters, double *startX, double *startY, double *resolutio
    
    int path = clock() & (RANDOM_POOL_SIZE - 1);
    
+   *xNdx = stdDevs[path].xNdx;
+   *yNdx = stdDevs[path].yNdx;
+
    *startX += stdDevs[path].xNdx * *resolution / WIDTH;
    *startY += stdDevs[path].yNdx * *resolution / HEIGHT;
    

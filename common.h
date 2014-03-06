@@ -44,6 +44,6 @@ double Variance(uint32_t iters[], double mean, uint32_t count);
 
 void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int count, int xNdx, int yNdx);
 
-void findPath(uint32_t *iters, double *startX, double *startY, double *resolution);
+void findPath(uint32_t *iters, double *startX, double *startY, double *resolution, int *xNdx, int *yNdx);
 
 #endif
