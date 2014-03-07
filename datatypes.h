@@ -115,6 +115,17 @@ private:
       return 0;
    }
 
+   int topBytesEmpty() const {
+      int len = numBytes;
+      unsigned char *ptr = (unsigned char*)data;
+
+      while (len--)
+         if (ptr[len])
+            return numBytes - (len + 1);
+
+      return numBytes;
+   }
+
    bool nonZero() const {
       uint32_t *ptr = (uint32_t *) data;
       int len = numBytes >> 2;
@@ -356,15 +367,15 @@ public:
       int bytes = a / 8;
       int bits = a % 8;
 
-      int overflow = 0;
-      if (topBitsSet(data, numBytes, a))
-         overflow = bytes + (bits > 0 ? 1 : 0);
+      int clearBytes = topBytesEmpty();
+      int overflow = std::max(0, bytes + (bits > 0 ? 1 : 0) - clearBytes);
 
       Number t(numBytes + overflow);
       memset(t.data, 0, t.numBytes);
 
       char *ptr = (char *) t.data;
-      memcpy(ptr + bytes, data, numBytes);
+      if (clearBytes < numBytes)
+         memcpy(ptr + bytes, data, numBytes - clearBytes);
 
       unsigned char mask = (~((1 << (8 - bits)) - 1));
       unsigned char over = 0, tmp;
