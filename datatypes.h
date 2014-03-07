@@ -21,6 +21,14 @@
 #define BASE 65536
 #define BASE_SQR 4294967296ULL
 
+template <typename VecObject>
+void printList(const VecObject &v) {
+   typename VecObject::const_iterator it;
+   for (it = v.begin(); it != v.end(); ++it)
+      std::cout << *it << " ";
+   std::cout << std::endl;
+}
+
 inline bool numBase2(uint32_t n) {
    return n == 0 || ((n & (n - 1)) == 0);
 }
@@ -145,8 +153,8 @@ private:
       Number tmp(*this);
 
       while (tmp.nonZero()) { // since BASE is 2^n we can optimize this into bit ops
-         t.insert(t.begin(), tmp.getLSU32());
-         tmp /= BASE;
+         t.insert(t.begin(), tmp.getLSU16());
+         tmp >>= 16;
       }
 
       if (t.size() % 2 == 1) {
@@ -186,6 +194,10 @@ private:
 
    uint32_t getLSU32() const {
       return *((uint32_t *) data);
+   }
+
+   uint32_t getLSU16() const {
+      return *((uint16_t *) data);
    }
 
 public:
@@ -354,14 +366,14 @@ public:
       //    *((double *) res) = comb(b) * scale;
 
       Number n = comb(b);
-      int shift = 16 * (aExt - cExt) - 2 * std::max(0, (int) (1 + a.size() - c.size()));
+      int shift = 16 * ((aExt - cExt) - 2 * std::max(0, (int) (1 + a.size() - c.size())));
 
       if (shift == 0)
          return n;
       else if (shift > 0)
          return n << shift;
       else
-         return n >> (-1 * shift);
+         return n >> (-shift);
    }
 
    Number operator<<(const int a) {
