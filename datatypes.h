@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <utility>
 #include <vector>
 
@@ -677,6 +678,26 @@ public:
 
    int getSize() {
       return numBytes;
+   }
+
+   friend std::ostream& operator<<(std::ostream& os, const Number& n) {
+      std::ios::fmtflags flags = os.flags();
+      int width = os.width();
+
+      int pos = n.numBytes - n.topBytesEmpty();
+      if (pos < 1)
+         pos = 1;
+
+      unsigned char *ptr = (unsigned char*)n.data;
+
+      os << "0x";
+      while (pos--)
+         os << std::noshowbase << std::hex << std::setw(2) << std::setfill('0') << (int)ptr[pos];
+      
+      os.width(width);
+      os.flags(flags);
+
+      return os;
    }
 };
 

@@ -29,6 +29,8 @@ int main() {
    a = l;
    b = r;
 
+   std::cout << a << "\t" << b << std::endl;
+
    Number c(&l, 4);
 
    Number d(4);
