@@ -249,7 +249,7 @@ public:
       return *this;
    }
 
-   Number &operator=(uint64_t a) {
+   Number& operator=(uint64_t a) {
       if (numBytes < 8)
          resize(8);
 
