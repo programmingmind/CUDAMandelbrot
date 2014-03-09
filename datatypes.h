@@ -781,9 +781,9 @@ public:
       q.d = d;
 
       mantissa.resize(8);
-      negative = q.i & (1UL << 63);
+      negative = q.i & (1ULL << 63);
       exponent = (q.i >> 52) & ((1 << 11) - 1);
-      mantissa = q.i & ((1UL << 52) - 1);
+      mantissa = q.i & ((1ULL << 52) - 1);
    }
 
    Decimal(Number &n) {
@@ -914,6 +914,25 @@ public:
       return mantissa == a.mantissa;
    }
 
+   bool operator>(const uint32_t a) {
+      Decimal r(a);
+      return operator>(r);
+   }
+
+   bool operator<(const uint32_t a) {
+      Decimal r(a);
+      return operator<(r);
+   }
+
+   bool operator>=(const uint32_t a) {
+      Decimal r(a);
+      return operator>=(r);
+   }
+
+   bool operator<=(const uint32_t a) {
+      Decimal r(a);
+      return operator<=(r);
+   }
 };
 
 #endif
