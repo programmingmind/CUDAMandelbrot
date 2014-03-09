@@ -13,8 +13,9 @@ cuda: $(COMMON) cuda.cu
 	nvcc $(NVFLAGS) -o cuda.o cuda.cu
 	g++ $(CCFLAGS) -DCUDA -o MandelbrotGPU cuda.o $(COMMON) $(LDFLAGS)
 
-tests: tests.cpp datatypes.h
-	g++ $(CCFLAGS) -o tests $^ -lm
+tests: tests.cu datatypes.h
+	nvcc $(NVFLAGS) -o tests.o tests.cu
+	g++ $(CCFLAGS) -o tests datatypes.h tests.o $(LDFLAGS)
 
 div: fourierDivision.cpp
 	g++ $(CCFLAGS) -o fd $^

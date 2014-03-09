@@ -21,6 +21,12 @@
 #define BASE 65536
 #define BASE_SQR 4294967296ULL
 
+typedef struct {
+   uint32_t *data;
+   int len;
+   int extra;
+} splitInfo_t;
+
 template <typename VecObject>
 void printList(const VecObject &v) {
    typename VecObject::const_iterator it;
@@ -29,11 +35,13 @@ void printList(const VecObject &v) {
    std::cout << std::endl;
 }
 
-inline bool numBase2(uint32_t n) {
+inline __host__ __device__
+bool numBase2(uint32_t n) {
    return n == 0 || ((n & (n - 1)) == 0);
 }
 
-inline uint32_t nextBase2(uint32_t n) {
+inline __host__ __device__
+uint32_t nextBase2(uint32_t n) {
    if (numBase2(n))
       return n;
 
@@ -44,6 +52,7 @@ inline uint32_t nextBase2(uint32_t n) {
    return num;
 }
 
+__host__ __device__
 bool topBitsSet(void *data, int len, int numBits) {
    char *d = (char *) data;
    int bytes = numBits / 8, bits = numBits % 8;
@@ -55,9 +64,10 @@ bool topBitsSet(void *data, int len, int numBits) {
       if (d[len - i] != 0)
          return true;
 
-   return numBits > 0 && (((~((1 << (8 - numBits)) - 1)) & d[len - bytes - 1]) != 0);
+   return bits > 0 && (((~((1 << (8 - bits)) - 1)) & d[len - bytes - 1]) != 0);
 }
 
+__host__ __device__
 uint32_t unsignedAbs(int64_t i) {
    if (i < 0)
       i *= -1;
@@ -65,13 +75,36 @@ uint32_t unsignedAbs(int64_t i) {
    return *((uint32_t *) ((void *) &i));
 }
 
+template <typename numType>
+__host__ __device__
+numType max(numType a, numType b) {
+   return a > b ? a : b;
+}
+
+template <typename numType>
+__host__ __device__
+numType min(numType a, numType b) {
+   return a < b ? a : b;
+}
+
+__host__ __device__
+unsigned int log2(uint32_t n) {
+   unsigned int i = 0;
+   while (n) {
+      n >>= 1;
+      ++i;
+   }
+   return i;
+}
+
 class Number {
 private:
    void *data;
    int numBytes;
 
+   __host__ __device__
    bool compare(const Number& a, bool lt) {
-      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = std::max(lSize, rSize);
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = max(lSize, rSize);
       uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data;
 
       for (int i = len - 1; i >= 0; i--) {
@@ -83,7 +116,8 @@ private:
       return false;
    }
 
-   inline Number& copyIn(Number a) {
+   inline __host__ __device__
+   Number& copyIn(Number a) {
       // the deallocater frees the pointer so just swap the pointers to handle the memory properly
       void *tmp = data;
       data = a.data;
@@ -92,6 +126,7 @@ private:
       return *this;
    }
 
+   __host__ __device__
    bool isBase2() const {
       bool base2Seen = false;
 
@@ -113,6 +148,7 @@ private:
    }
 
    // returns exponent of first high bit
+   __host__ __device__
    int binlog() const {
       uint32_t *ptr = (uint32_t *) data;
       int len = numBytes >> 2;
@@ -124,6 +160,7 @@ private:
       return 0;
    }
 
+   __host__ __device__
    int topBytesEmpty() const {
       int len = numBytes;
       unsigned char *ptr = (unsigned char*)data;
@@ -135,6 +172,7 @@ private:
       return numBytes;
    }
 
+   __host__ __device__
    bool nonZero() const {
       uint32_t *ptr = (uint32_t *) data;
       int len = numBytes >> 2;
@@ -146,42 +184,47 @@ private:
       return false;
    }
 
-   std::pair<std::vector<uint32_t>, int> split() const {
-      std::vector<uint32_t> t;
-      int extra = 0;
+   __host__ __device__
+   splitInfo_t split() const {
+      splitInfo_t info;
+      info.extra = 0;
 
       Number tmp(*this);
 
-      while (tmp.nonZero()) { // since BASE is 2^n we can optimize this into bit ops
-         t.insert(t.begin(), tmp.getLSU16());
-         tmp >>= 16;
+      int usedBytes = numBytes - topBytesEmpty();
+      int num16 = (usedBytes + 1) / 2; // ceil
+      if (num16 & 1) {
+         ++num16;
+         ++info.extra;
+         tmp <<= 16;
       }
 
-      if (t.size() % 2 == 1) {
-         t.push_back(0);
-         extra++;
+      int num32 = (tmp.numBytes - tmp.topBytesEmpty() + 3) / 4; // ceil
+      if (num32 == 1) {
+         tmp << 32;
+         ++num32;
+         info.extra += 2;
       }
 
-      std::vector<uint32_t> a;
-      for (int i = 0; i < t.size(); i += 2)
-         a.push_back(t[i] * BASE + t[i + 1]);
-
-      if (a.size() == 1) {
-         a.push_back(0);
-         extra += 2;
+      info.len = num32;
+      info.data = (uint32_t *) malloc(num32 * 4);
+      while (num32--) {
+         info.data[num32] = tmp.getLSU32();
+         tmp >>= 32;
       }
 
-      return std::make_pair(a, extra);
+      return info;
    }
 
-   static Number comb(std::vector<int64_t> l) {
-      Number n(4 * (int)(l.end() - l.begin()));
+   __host__ __device__
+   static Number comb(int64_t *l, int len) {
+      Number n(4 * len);
       memset(n.data, 0, n.numBytes);
 
-      for (std::vector<int64_t>::iterator it = l.begin(); it != l.end(); it++) {
+      for (int i = 0; i < len; i++) {
          n <<= 32;
-         bool sub = *it < 0;
-         uint32_t val = unsignedAbs(*it);
+         bool sub = l[i] < 0;
+         uint32_t val = unsignedAbs(l[i]);
 
          if (sub)
             n -= val;
@@ -192,31 +235,38 @@ private:
       return n;
    }
 
+   __host__ __device__
    uint32_t getLSU32() const {
       return *((uint32_t *) data);
    }
 
+   __host__ __device__
    uint32_t getLSU16() const {
       return *((uint16_t *) data);
    }
 
 public:
+   __host__ __device__
    Number() {
       numBytes = MIN_BYTES;
       data = malloc(numBytes);
    }
 
+   __host__ __device__
    Number(int bytes) {
-      numBytes = nextBase2(std::max(bytes, MIN_BYTES));
+      numBytes = nextBase2(max(bytes, MIN_BYTES));
       data = malloc(numBytes);
    }
 
+   __host__ __device__
    Number(const void *bytes, int len) {
       numBytes = nextBase2(len);
-      data = calloc(len, 1);
+      data = malloc(numBytes);
+      memset(data, 0, numBytes);
       memcpy(data, bytes, len);
    }
 
+   __host__ __device__
    Number(const Number& num) {
       numBytes = num.numBytes;
       data = malloc(numBytes);
@@ -224,27 +274,31 @@ public:
       memcpy(data, num.data, numBytes);
    }
 
+   __host__ __device__
    ~Number() {
       free(data);
    }
 
+   __host__ __device__
    Number& operator=(const Number& a) {
       if (this == &a)
          return *this;
 
       memset(data, 0, numBytes);
-      memcpy(data, a.data, std::min(numBytes, a.numBytes));
+      memcpy(data, a.data, min(numBytes, a.numBytes));
       return *this;
    }
 
+   __host__ __device__
    Number& operator=(unsigned int a) {
       memset(data, 0, numBytes);
       ((unsigned int *)data)[0] = a;
       return *this;
    }
 
+   __host__ __device__
    Number operator+(const Number& a) {
-      Number n(std::max(numBytes, a.numBytes));
+      Number n(max(numBytes, a.numBytes));
 
       int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
       uint32_t *num1 = ((uint32_t *)data);
@@ -273,8 +327,9 @@ public:
       return n;
    }
 
+   __host__ __device__
    Number operator-(const Number& a) {
-      Number n(std::max(numBytes, a.numBytes));
+      Number n(max(numBytes, a.numBytes));
 
       uint32_t *num1 = ((uint32_t *)data);
       uint32_t *num2 = ((uint32_t *)a.data);
@@ -304,6 +359,7 @@ public:
       return n;
    }
 
+   __host__ __device__
    Number operator*(const Number& a) {
       Number p(numBytes + a.numBytes);
       memset(p.data, 0, p.numBytes);
@@ -325,6 +381,7 @@ public:
       return p;
    }
 
+   __host__ __device__
    Number operator/(const Number& aN) {
       if (! (nonZero() && aN.nonZero())) {
          return *this;
@@ -333,40 +390,33 @@ public:
       if (aN.isBase2())
          return operator>>(aN.binlog());
 
-      std::pair<std::vector<uint32_t>, int> t;
+      splitInfo_t a, c;
 
-      t = aN.split();
-      std::vector<uint32_t> a = t.first;
-      int aExt = t.second;
+      a = aN.split();
+      c = split();
 
-      t = split();
-      std::vector<uint32_t> c = t.first;
-      int cExt = t.second;
+      int limit = c.len - a.len + 1;
+      int64_t *b = (int64_t *) malloc((limit - 1) * 8);
 
-      std::vector<int64_t> b;
-      int64_t tmp = c[0] * BASE_SQR + c[1];
-      b.push_back(tmp / a[0]);
-      int64_t r = tmp % a[0];
+      int64_t tmp = c.data[0] * BASE_SQR + c.data[1];
+      b[0] = (tmp / a.data[0]);
+      int64_t r = tmp % a.data[0];
 
-      int limit = c.size() - a.size() + 1;
       for (int i = 2; i < limit; i++) {
-         tmp = r * BASE_SQR + c[i];
+         tmp = r * BASE_SQR + c.data[i];
 
-         for (int j = 1; j < a.size() && j < i; j++)
-            tmp -= a[j] * b[i - j - 1];
+         for (int j = 1; j < a.len && j < i; j++)
+            tmp -= a.data[j] * b[i - j - 1];
 
-         b.push_back(tmp / a[0]);
-         r = tmp % a[0];
+         b[i - 1] = (tmp / a.data[0]);
+         r = tmp % a.data[0];
       }
 
-      // double scale = pow(BASE, (aExt - cExt) - 2 * max(0, (int) (1 + a.size() - c.size())));
-      // if (trunc)
-      //    *((uint64_t *) res) = comb(b) * scale;
-      // else
-      //    *((double *) res) = comb(b) * scale;
+      free(a.data);
+      free(c.data);
 
-      Number n = comb(b);
-      int shift = 16 * ((aExt - cExt) - 2 * std::max(0, (int) (1 + a.size() - c.size())));
+      Number n = comb(b, limit - 1);
+      int shift = 16 * ((a.extra - c.extra) - 2 * max(0, (int) (1 + a.len - c.len)));
 
       if (shift == 0)
          return n;
@@ -376,12 +426,13 @@ public:
          return n >> (-shift);
    }
 
+   __host__ __device__
    Number operator<<(const int a) {
       int bytes = a / 8;
       int bits = a % 8;
 
       int clearBytes = topBytesEmpty();
-      int overflow = std::max(0, bytes + (bits > 0 ? 1 : 0) - clearBytes);
+      int overflow = max(0, bytes + (bits > 0 ? 1 : 0) - clearBytes);
 
       Number t(numBytes + overflow);
       memset(t.data, 0, t.numBytes);
@@ -402,6 +453,7 @@ public:
       return t;
    }
 
+   __host__ __device__
    Number operator>>(const int a) {
       int bytes = a / 8;
       int bits = a % 8;
@@ -424,8 +476,9 @@ public:
       return t;
    }
 
+   __host__ __device__
    Number operator&(const Number& a) {
-      Number n(std::min(numBytes, a.numBytes));
+      Number n(min(numBytes, a.numBytes));
 
       memset(n.data, 0, n.numBytes);
 
@@ -437,8 +490,9 @@ public:
       return n;
    }
 
+   __host__ __device__
    Number operator|(const Number& a) {
-      Number n(std::max(numBytes, a.numBytes));
+      Number n(max(numBytes, a.numBytes));
 
       int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
       uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
@@ -449,8 +503,9 @@ public:
       return n;
    }
 
+   __host__ __device__
    Number operator^(const Number& a) {
-      Number n(std::max(numBytes, a.numBytes));
+      Number n(max(numBytes, a.numBytes));
 
       int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = n.numBytes >> 2;
       uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data, *v = (uint32_t *) n.data;
@@ -461,56 +516,69 @@ public:
       return n;
    }
 
+   __host__ __device__
    Number& operator+=(const Number& a) {
       return copyIn(operator+(a));
    }
 
+   __host__ __device__
    Number& operator-=(const Number& a) {
       return copyIn(operator-(a));
    }
 
+   __host__ __device__
    Number& operator*=(const Number& a) {
       return copyIn(operator*(a));
    }
 
+   __host__ __device__
    Number& operator/=(const Number& a) {
       return copyIn(operator/(a));
    }
 
+   __host__ __device__
    Number& operator<<=(const int a) {
       return copyIn(operator<<(a));
    }
 
+   __host__ __device__
    Number& operator>>=(const int a) {
       return copyIn(operator>>(a));
    }
 
+   __host__ __device__
    Number& operator&=(const Number& a) {
       return copyIn(operator&(a));
    }
 
+   __host__ __device__
    Number& operator|=(const Number& a) {
       return copyIn(operator|(a));
    }
 
+   __host__ __device__
    Number& operator^=(const Number& a) {
       return copyIn(operator^(a));
    }
 
+   __host__ __device__
    Number& operator&=(const uint32_t a) {
       return copyIn(operator&(a));
    }
 
+   __host__ __device__
    Number& operator|=(const uint32_t a) {
       return copyIn(operator|(a));
    }
 
+   __host__ __device__
    Number& operator^=(const uint32_t a) {
       return copyIn(operator^(a));
    }
 
+   __host__ __device__
    bool operator==(const Number& a) {
-      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = std::max(lSize, rSize);
+      int lSize = numBytes >> 2, rSize = a.numBytes >> 2, len = max(lSize, rSize);
       uint32_t *l = (uint32_t *) data, *r = (uint32_t *) a.data;
 
       for (int i = 0; i < len; i++)
@@ -519,26 +587,32 @@ public:
       return true;
    }
 
+   __host__ __device__
    bool operator!=(const Number& a) {
       return ! operator==(a);
    }
 
+   __host__ __device__
    bool operator>(const Number& a) {
       return compare(a, false);
    }
 
+   __host__ __device__
    bool operator<(const Number& a) {
       return compare(a, true);
    }
 
+   __host__ __device__
    bool operator>=(const Number& a) {
       return ! operator<(a);
    }
 
+   __host__ __device__
    bool operator<=(const Number& a) {
       return ! operator>(a);
    }
 
+   __host__ __device__
    Number operator%(const uint32_t a) {
       uint32_t *d = (uint32_t *) data;
       int len = numBytes >> 2;
@@ -553,114 +627,133 @@ public:
    }
 
    // there must be a better way to do these functions...
+   __host__ __device__
    Number operator+(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator+(r);
    }
 
+   __host__ __device__
    Number operator-(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator-(r);
    }
 
+   __host__ __device__
    Number operator*(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator*(r);
    }
 
+   __host__ __device__
    Number operator*(const uint64_t a) {
       Number t(&a, 8);
       const Number& r = t;
       return operator*(r);
    }
 
+   __host__ __device__
    Number operator/(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator/(r);
    }
 
+   __host__ __device__
    Number operator+=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator+=(r);
    }
 
+   __host__ __device__
    Number operator-=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator-=(r);
    }
 
+   __host__ __device__
    Number operator*=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator*=(r);
    }
 
+   __host__ __device__
    Number operator/=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator/=(r);
    }
 
+   __host__ __device__
    Number operator&(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator&(r);
    }
 
+   __host__ __device__
    Number operator|(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator^(r);
    }
 
+   __host__ __device__
    Number operator^(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator^(r);
    }
 
+   __host__ __device__
    bool operator==(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator==(r);
    }
 
+   __host__ __device__
    bool operator!=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator!=(r);
    }
 
+   __host__ __device__
    bool operator>(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator>(r);
    }
 
+   __host__ __device__
    bool operator<(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator<(r);
    }
 
+   __host__ __device__
    bool operator>=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator>=(r);
    }
 
+   __host__ __device__
    bool operator<=(const uint32_t a) {
       Number t(&a, 4);
       const Number& r = t;
       return operator<=(r);
    }
 
+   __host__ __device__
    void trim() {
       char* ptr = (char *) data;
       int used;
@@ -672,7 +765,7 @@ public:
          }
       }
 
-      int newBytes = std::max(nextBase2(used), (uint32_t) MIN_BYTES);
+      int newBytes = max(nextBase2(used), (uint32_t) MIN_BYTES);
       if (newBytes < numBytes) {
          void *smaller = malloc(newBytes);
          memcpy(smaller, data, newBytes);
@@ -682,16 +775,19 @@ public:
       }
    }
 
+   __host__ __device__
    void* getData() {
       void *ptr = malloc(numBytes);
       memcpy(ptr, data, numBytes);
       return ptr;
    }
 
+   __host__ __device__
    int getSize() {
       return numBytes;
    }
 
+   __host__
    friend std::ostream& operator<<(std::ostream& os, const Number& n) {
       std::ios::fmtflags flags = os.flags();
       int width = os.width();
@@ -720,41 +816,47 @@ private:
    Number mantissa;
 
 public:
+   __host__ __device__
    Decimal(unsigned int i) {
       negative = false;
       exponent = 0;
       mantissa = i;
    }
 
+   __host__ __device__
    Decimal(float f) {
       negative = false;
       exponent = 0;
       mantissa = 0;
    }
 
+   __host__ __device__
    Decimal(double d) {
       negative = false;
       exponent = 0;
       mantissa = 0;
    }
 
+   __host__ __device__
    Decimal(Number &n) {
       negative = false;
       exponent = 0;
       mantissa = n;
    }
 
+   __host__ __device__
    Decimal(const Decimal& d) {
       negative = d.negative;
       exponent = d.exponent;
       mantissa = d.mantissa;
    }
 
+   __host__ __device__
    Decimal operator+(const Decimal& a) {
       if (exponent != a.exponent) {
          Decimal tmp((exponent < a.exponent) ? *this : a);
          tmp.mantissa <<= abs(a.exponent - exponent);
-         tmp.exponent = std::max(exponent, a.exponent);
+         tmp.exponent = max(exponent, a.exponent);
 
          return (exponent < a.exponent) ? (tmp + a) : (operator+(tmp));
       }
@@ -778,11 +880,12 @@ public:
       return tmp;
    }
 
+   __host__ __device__
    Decimal operator-(const Decimal& a) {
       if (exponent != a.exponent) {
          Decimal tmp((exponent < a.exponent) ? *this : a);
          tmp.mantissa <<= abs(a.exponent - exponent);
-         tmp.exponent = std::max(exponent, a.exponent);
+         tmp.exponent = max(exponent, a.exponent);
 
          return (exponent < a.exponent) ? (tmp - a) : (operator-(tmp));
       }
@@ -805,6 +908,7 @@ public:
       return tmp;
    }
 
+   __host__ __device__
    Decimal operator*(const Decimal& a) {
       Decimal tmp(a);
 
@@ -815,6 +919,7 @@ public:
       return tmp;
    }
 
+   __host__ __device__
    Decimal operator/(const Decimal& a) {
       Decimal tmp(*this);
 
