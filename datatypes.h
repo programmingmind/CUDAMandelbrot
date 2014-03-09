@@ -991,22 +991,27 @@ public:
       return tmp;
    }
 
+   __host__ __device__
    bool operator>(const Decimal& a) {
       return compare(a, false);
    }
 
+   __host__ __device__
    bool operator<(const Decimal& a) {
       return compare(a, true);
    }
 
+   __host__ __device__
    bool operator>=(const Decimal& a) {
       return ! operator<(a);
    }
 
+   __host__ __device__
    bool operator<=(const Decimal& a) {
       return ! operator>(a);
    }
 
+   __host__ __device__
    bool operator==(const Decimal& a) {
       if (negative != a.negative)
          return false;
@@ -1022,21 +1027,25 @@ public:
       return mantissa == a.mantissa;
    }
 
+   __host__ __device__
    bool operator>(const uint32_t a) {
       Decimal r(a);
       return operator>(r);
    }
 
+   __host__ __device__
    bool operator<(const uint32_t a) {
       Decimal r(a);
       return operator<(r);
    }
 
+   __host__ __device__
    bool operator>=(const uint32_t a) {
       Decimal r(a);
       return operator>=(r);
    }
 
+   __host__ __device__
    bool operator<=(const uint32_t a) {
       Decimal r(a);
       return operator<=(r);
