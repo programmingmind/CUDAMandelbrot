@@ -705,7 +705,7 @@ public:
       os << "0x";
       while (pos--)
          os << std::noshowbase << std::hex << std::setw(2) << std::setfill('0') << (int)ptr[pos];
-      
+
       os.width(width);
       os.flags(flags);
 
@@ -719,6 +719,23 @@ private:
    int32_t exponent;
    Number mantissa;
 
+   bool compare(const Decimal& a, bool lt) {
+      if (negative && !a.negative)
+         return lt;
+      if (!negative && a.negative)
+         return ! lt;
+
+      if (exponent < a.exponent)
+         return lt;
+      if (exponent > a.exponent)
+         return ! lt;
+
+      if (lt)
+        return mantissa < a.mantissa;
+
+      return mantissa > a.mantissa;
+   }
+
 public:
    Decimal(unsigned int i) {
       negative = false;
@@ -727,15 +744,15 @@ public:
    }
 
    Decimal(float f) {
-      negative = false;
-      exponent = 0;
-      mantissa = 0;
+      negative = f & (1 << 31);
+      exponent = (f >> 23) & ((1 << 8) - 1);
+      mantissa = f & ((1 << 23) - 1);
    }
 
    Decimal(double d) {
-      negative = false;
-      exponent = 0;
-      mantissa = 0;
+      negative = f & (1 << 63);
+      exponent = (f >> 52) & ((1 << 11) - 1);
+      mantissa = f & ((1 << 52) - 1);
    }
 
    Decimal(Number &n) {
@@ -748,6 +765,16 @@ public:
       negative = d.negative;
       exponent = d.exponent;
       mantissa = d.mantissa;
+   }
+
+   Decimal& operator=(const Decimal& a) {
+      if (this == &a)
+         return *this;
+
+      negative = a.negative;
+      exponent = a.exponent;
+      mantissa = a.mantissa;
+      return *this;
    }
 
    Decimal operator+(const Decimal& a) {
@@ -811,7 +838,7 @@ public:
       tmp.negative ^= negative;
       tmp.exponent += exponent;
       tmp.mantissa *= mantissa;
-      
+
       return tmp;
    }
 
@@ -824,6 +851,32 @@ public:
 
       return tmp;
    }
+
+   bool operator>(const Decimal& a) {
+      return compare(a, false);
+   }
+
+   bool operator<(const Decimal& a) {
+      return compare(a, true);
+   }
+
+   bool operator>=(const Decimal& a) {
+      return ! operator<(a);
+   }
+
+   bool operator<=(const Decimal& a) {
+      return ! operator>(a);
+   }
+
+   bool operator==(const Decimal& a) {
+      if (negative != a.negative)
+         return false;
+      if (exponent != a.exponent)
+        return false;
+
+      return mantissa == a.mantissa;
+   }
+
 };
 
 #endif
