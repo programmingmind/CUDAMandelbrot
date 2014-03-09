@@ -228,6 +228,12 @@ public:
       free(data);
    }
 
+   void resize(int bytes) {
+      free(data);
+      numBytes = nextBase2(std::max(bytes, MIN_BYTES));
+      data = malloc(numBytes);
+   }
+
    Number& operator=(const Number& a) {
       if (this == &a)
          return *this;
@@ -240,6 +246,15 @@ public:
    Number& operator=(unsigned int a) {
       memset(data, 0, numBytes);
       ((unsigned int *)data)[0] = a;
+      return *this;
+   }
+
+   Number &operator=(uint64_t a) {
+      if (numBytes < 8)
+         resize(8);
+
+      memset(data, 0, numBytes);
+      ((uint64_t *)data)[0] = a;
       return *this;
    }
 
@@ -725,10 +740,13 @@ private:
       if (!negative && a.negative)
          return ! lt;
 
-      if (exponent < a.exponent)
-         return lt;
-      if (exponent > a.exponent)
-         return ! lt;
+      if (exponent != a.exponent) {
+         Decimal tmp((exponent < a.exponent) ? *this : a);
+         tmp.mantissa <<= abs(a.exponent - exponent);
+         tmp.exponent = std::max(exponent, a.exponent);
+
+         return (exponent < a.exponent) ? tmp.compare(a, lt) : compare(tmp, lt);
+      }
 
       if (lt)
         return mantissa < a.mantissa;
@@ -744,15 +762,28 @@ public:
    }
 
    Decimal(float f) {
-      negative = f & (1 << 31);
-      exponent = (f >> 23) & ((1 << 8) - 1);
-      mantissa = f & ((1 << 23) - 1);
+      union {
+         float f;
+         uint32_t i;
+      } q;
+      q.f = f;
+
+      negative = q.i & (1 << 31);
+      exponent = (q.i >> 23) & ((1 << 8) - 1);
+      mantissa = q.i & ((1 << 23) - 1);
    }
 
    Decimal(double d) {
-      negative = f & (1 << 63);
-      exponent = (f >> 52) & ((1 << 11) - 1);
-      mantissa = f & ((1 << 52) - 1);
+      union {
+         double d;
+         uint64_t i;
+      } q;
+      q.d = d;
+
+      mantissa.resize(8);
+      negative = q.i & (1UL << 63);
+      exponent = (q.i >> 52) & ((1 << 11) - 1);
+      mantissa = q.i & ((1UL << 52) - 1);
    }
 
    Decimal(Number &n) {
@@ -871,8 +902,14 @@ public:
    bool operator==(const Decimal& a) {
       if (negative != a.negative)
          return false;
-      if (exponent != a.exponent)
-        return false;
+
+      if (exponent != a.exponent) {
+         Decimal tmp((exponent < a.exponent) ? *this : a);
+         tmp.mantissa <<= abs(a.exponent - exponent);
+         tmp.exponent = std::max(exponent, a.exponent);
+
+         return (exponent < a.exponent) ? (tmp.mantissa == a.mantissa) : (mantissa == tmp.mantissa);
+      }
 
       return mantissa == a.mantissa;
    }
