@@ -228,6 +228,12 @@ public:
       free(data);
    }
 
+   void resize(int bytes) {
+      free(data);
+      numBytes = nextBase2(std::max(bytes, MIN_BYTES));
+      data = malloc(numBytes);
+   }
+
    Number& operator=(const Number& a) {
       if (this == &a)
          return *this;
@@ -240,6 +246,15 @@ public:
    Number& operator=(unsigned int a) {
       memset(data, 0, numBytes);
       ((unsigned int *)data)[0] = a;
+      return *this;
+   }
+
+   Number& operator=(uint64_t a) {
+      if (numBytes < 8)
+         resize(8);
+
+      memset(data, 0, numBytes);
+      ((uint64_t *)data)[0] = a;
       return *this;
    }
 
@@ -705,7 +720,7 @@ public:
       os << "0x";
       while (pos--)
          os << std::noshowbase << std::hex << std::setw(2) << std::setfill('0') << (int)ptr[pos];
-      
+
       os.width(width);
       os.flags(flags);
 
@@ -719,6 +734,26 @@ private:
    int32_t exponent;
    Number mantissa;
 
+   bool compare(const Decimal& a, bool lt) {
+      if (negative && !a.negative)
+         return lt;
+      if (!negative && a.negative)
+         return ! lt;
+
+      if (exponent != a.exponent) {
+         Decimal tmp((exponent < a.exponent) ? *this : a);
+         tmp.mantissa <<= abs(a.exponent - exponent);
+         tmp.exponent = std::max(exponent, a.exponent);
+
+         return (exponent < a.exponent) ? tmp.compare(a, lt) : compare(tmp, lt);
+      }
+
+      if (lt)
+        return mantissa < a.mantissa;
+
+      return mantissa > a.mantissa;
+   }
+
 public:
    Decimal(unsigned int i) {
       negative = false;
@@ -727,15 +762,28 @@ public:
    }
 
    Decimal(float f) {
-      negative = false;
-      exponent = 0;
-      mantissa = 0;
+      union {
+         float f;
+         uint32_t i;
+      } q;
+      q.f = f;
+
+      negative = q.i & (1 << 31);
+      exponent = (q.i >> 23) & ((1 << 8) - 1);
+      mantissa = q.i & ((1 << 23) - 1);
    }
 
    Decimal(double d) {
-      negative = false;
-      exponent = 0;
-      mantissa = 0;
+      union {
+         double d;
+         uint64_t i;
+      } q;
+      q.d = d;
+
+      mantissa.resize(8);
+      negative = q.i & (1ULL << 63);
+      exponent = (q.i >> 52) & ((1 << 11) - 1);
+      mantissa = q.i & ((1ULL << 52) - 1);
    }
 
    Decimal(Number &n) {
@@ -748,6 +796,16 @@ public:
       negative = d.negative;
       exponent = d.exponent;
       mantissa = d.mantissa;
+   }
+
+   Decimal& operator=(const Decimal& a) {
+      if (this == &a)
+         return *this;
+
+      negative = a.negative;
+      exponent = a.exponent;
+      mantissa = a.mantissa;
+      return *this;
    }
 
    Decimal operator+(const Decimal& a) {
@@ -811,7 +869,7 @@ public:
       tmp.negative ^= negative;
       tmp.exponent += exponent;
       tmp.mantissa *= mantissa;
-      
+
       return tmp;
    }
 
@@ -823,6 +881,57 @@ public:
       tmp.mantissa /= a.mantissa;
 
       return tmp;
+   }
+
+   bool operator>(const Decimal& a) {
+      return compare(a, false);
+   }
+
+   bool operator<(const Decimal& a) {
+      return compare(a, true);
+   }
+
+   bool operator>=(const Decimal& a) {
+      return ! operator<(a);
+   }
+
+   bool operator<=(const Decimal& a) {
+      return ! operator>(a);
+   }
+
+   bool operator==(const Decimal& a) {
+      if (negative != a.negative)
+         return false;
+
+      if (exponent != a.exponent) {
+         Decimal tmp((exponent < a.exponent) ? *this : a);
+         tmp.mantissa <<= abs(a.exponent - exponent);
+         tmp.exponent = std::max(exponent, a.exponent);
+
+         return (exponent < a.exponent) ? (tmp.mantissa == a.mantissa) : (mantissa == tmp.mantissa);
+      }
+
+      return mantissa == a.mantissa;
+   }
+
+   bool operator>(const uint32_t a) {
+      Decimal r(a);
+      return operator>(r);
+   }
+
+   bool operator<(const uint32_t a) {
+      Decimal r(a);
+      return operator<(r);
+   }
+
+   bool operator>=(const uint32_t a) {
+      Decimal r(a);
+      return operator>=(r);
+   }
+
+   bool operator<=(const uint32_t a) {
+      Decimal r(a);
+      return operator<=(r);
    }
 };
 
