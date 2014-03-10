@@ -115,7 +115,7 @@ public:
    Number operator<<(const int a) const;
 
    HOST DEVICE
-   Number operator>>(const int a);
+   Number operator>>(const int a) const;
 
    HOST DEVICE
    Number operator&(const Number& a);

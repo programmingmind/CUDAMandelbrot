@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
    a = l;
    b = r;
 
-   std::cout << a << "\t" << b << std::endl;
+   // std::cout << a << "\t" << b << std::endl;
 
    Number c(&l, 4);
 
@@ -83,9 +83,17 @@ int main(int argc, char *argv[]) {
 
    free(prodData);
 
+   Number nThree(4);
+   nThree = 3U;
+   Number nFortyEight(4);
+   nFortyEight = 48U;
+
    printResult("division #1", (a*b)/a == b);
    printResult("division #2", (a*b)/b == a);
-   printResult("division #3", (Number(3U) / Number(3U)) == 1U);
+   printResult("division #3", (nThree / nThree) == 1U);
+   printResult("division #4", (nFortyEight / nThree) == 16U);
+
+   std::cout<<(nFortyEight / nThree)<<std::endl;
 
    uint64_t prod16 = 0x56af6f4d0ULL;
    Number n16(&prod16, 8);
@@ -142,10 +150,10 @@ int main(int argc, char *argv[]) {
    Decimal dTwelve(12.0);
    Decimal dSixteen(16.0);
 
-   std::cout<<"zero   : " << Decimal(0.0) << std::endl;
+   /*std::cout<<"zero   : " << Decimal(0.0) << std::endl;
    std::cout<<"four   : " << dFour << std::endl;
    std::cout<<"twelve : " << dTwelve << std::endl;
-   std::cout<<"sixteen: " << dSixteen << std::endl;
+   std::cout<<"sixteen: " << dSixteen << std::endl;*/
 
    printResult("decimal addition", dFour + dTwelve == dSixteen);
    printResult("decimal subtraction", dSixteen - dTwelve == dFour);

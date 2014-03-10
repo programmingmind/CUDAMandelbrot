@@ -377,6 +377,12 @@ Number Number::operator/(const Number& aN) {
       return *this;
    }
 
+   if (operator==(aN)) {
+      Number tmp(4);
+      tmp = 1U;
+      return tmp;
+   }
+
    if (aN.isBase2())
       return operator>>(aN.binlog());
 
@@ -445,7 +451,7 @@ Number Number::operator<<(const int a) const {
 }
 
 __host__ __device__
-Number Number::operator>>(const int a) {
+Number Number::operator>>(const int a) const {
    int bytes = a / 8;
    int bits = a % 8;
 
@@ -958,8 +964,12 @@ Decimal Decimal::operator*(const Decimal& a) {
    tmp.negative ^= negative;
    tmp.exponent += exponent;
 
-   if (a.mantissa.isBase2())
+   if (mantissa.isBase2())
+      tmp.exponent += mantissa.binlog();
+   else if (a.mantissa.isBase2()) {
+      tmp.mantissa = mantissa;
       tmp.exponent += a.mantissa.binlog();
+   }
    else
       tmp.mantissa *= mantissa;
 
@@ -970,13 +980,13 @@ __host__ __device__
 Decimal Decimal::operator/(const Decimal& a) {
    Decimal tmp(*this);
 
-   tmp.negative ^= a.negative;
-   tmp.exponent -= a.exponent;
+   int low = a.mantissa.binlog();
 
-   if (a.mantissa.isBase2())
-      tmp.exponent -= a.mantissa.binlog();
-   else
-      tmp.mantissa /= a.mantissa;
+   tmp.negative ^= a.negative;
+   tmp.exponent -= (a.exponent + low);
+
+   if (! a.mantissa.isBase2())
+      tmp.mantissa /= (a.mantissa >> low);
 
    return tmp;
 }
