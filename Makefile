@@ -13,11 +13,12 @@ cuda: $(COMMON) cuda.cu
 	nvcc $(NVFLAGS) -o cuda.o cuda.cu
 	g++ $(CCFLAGS) -DCUDA -o MandelbrotGPU cuda.o $(COMMON) $(LDFLAGS)
 
-tests: tests.cpp datatypes.h
-	g++ $(CCFLAGS) -o tests $^ -lm
+tests: tests.cpp datatypes.cu
+	nvcc $(NVFLAGS) -o datatypes.o datatypes.cu
+	g++ $(CCFLAGS) -o tests datatypes.o tests.cpp $(LDFLAGS)
 
 div: fourierDivision.cpp
 	g++ $(CCFLAGS) -o fd $^
 
 clean:
-	rm -f cuda.o MandelbrotCPU MandelbrotGPU tests fd
+	rm -f cuda.o datatypes.o MandelbrotCPU MandelbrotGPU tests fd
