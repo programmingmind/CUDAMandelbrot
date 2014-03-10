@@ -910,7 +910,7 @@ Decimal Decimal::operator-(const Decimal& a) {
          tmp.negative = !negative;
          tmp.mantissa -= mantissa;
       } else {
-         tmp.mantissa += mantissa;
+         tmp.mantissa = mantissa - tmp.mantissa;
       }
    } else {
       tmp.negative = negative;
