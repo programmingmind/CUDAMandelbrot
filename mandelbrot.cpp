@@ -1,11 +1,5 @@
 #include "common.h"
 
-#ifdef CUDA
-#include "cuda.h"
-#else
-#include "cpu.h"
-#endif
-
 void updateScreen(int len, int xLen, int yLen, int gen, int xNdx, int yNdx) {
    printf("\rgenerated: %*d / %d\tzoom: ( %*d , %*d )", len, gen, DEPTH, xLen, xNdx, yLen, yNdx);
    fflush(stdout);

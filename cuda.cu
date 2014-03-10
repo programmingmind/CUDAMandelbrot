@@ -1,18 +1,21 @@
 #include "cuda.h"
+#include "common.h"
 
 __global__ void iterate(data_t startX, data_t startY, data_t resolution, uint32_t *iters) {
-   int yNdx = blockIdx.y * blockDim.y + threadIdx.y;
-	int xNdx = blockIdx.x * blockDim.x + threadIdx.x;
+   unsigned int yNdx = blockIdx.y * blockDim.y + threadIdx.y;
+	unsigned int xNdx = blockIdx.x * blockDim.x + threadIdx.x;
+
+   data_t x0((unsigned int) 0), y0((unsigned int) 0);
 	
 	if (xNdx < WIDTH && yNdx < HEIGHT) {
       uint32_t it=0;	
-      data_t x0 = startX + (xNdx * resolution / WIDTH);
-      data_t y0 = startY + (yNdx * resolution / HEIGHT);
+      x0 = startX + ((resolution * xNdx) / ((unsigned int) WIDTH));
+      y0 = startY + ((resolution * yNdx) / ((unsigned int) HEIGHT));
 		data_t x = x0, y = y0;
-      data_t xSqr, ySqr;
+      data_t xSqr((unsigned int) 0), ySqr((unsigned int) 0);
 	   
 	   while (((xSqr = x*x) + (ySqr = y*y) <= 4) && (it < MAX)) {
-         y = 2*x*y + y0;
+         y = x*y*((unsigned int) 2) + y0;
          x = xSqr - ySqr + x0;
          it++;
 	   }

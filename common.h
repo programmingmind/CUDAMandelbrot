@@ -1,6 +1,12 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifdef CUDA
+#include "cuda.h"
+#else
+#include "cpu.h"
+#endif
+
 #include <inttypes.h>
 #include <string.h>
 
@@ -28,8 +34,8 @@ using namespace std;
 typedef struct {
    double variance;
    double mean;
-   int xNdx;
-   int yNdx;
+   unsigned int xNdx;
+   unsigned int yNdx;
 } StdDevInfo_t;
 
 uint32_t getColor(uint32_t it);
@@ -44,6 +50,6 @@ double Variance(uint32_t iters[], double mean, uint32_t count);
 
 void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int count, int xNdx, int yNdx);
 
-void findPath(uint32_t *iters, double *startX, double *startY, double *resolution, int *xNdx, int *yNdx);
+void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolution, int *xNdx, int *yNdx);
 
 #endif

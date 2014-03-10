@@ -259,6 +259,9 @@ private:
    HOST DEVICE
    bool compare(const Decimal& a, bool lt);
 
+   inline HOST DEVICE
+   Decimal& copyIn(Decimal d);
+
 public:
    HOST DEVICE
    Decimal(unsigned int i);
@@ -316,6 +319,12 @@ public:
 
    HOST DEVICE
    bool operator<=(const uint32_t a);
+
+   HOST DEVICE
+   Decimal& operator+=(const Decimal& d);
+
+   HOST DEVICE
+   Decimal& operator/=(const Decimal& d);
 };
 
 #endif

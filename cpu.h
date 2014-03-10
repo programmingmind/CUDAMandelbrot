@@ -1,7 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-#include "common.h"
+#include <inttypes.h>
 
 typedef double data_t;
 

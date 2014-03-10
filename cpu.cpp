@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "common.h"
 
 uint32_t numIter(data_t x, data_t y) {
    uint32_t it=0;	

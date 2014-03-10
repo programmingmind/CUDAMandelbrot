@@ -796,6 +796,14 @@ bool Decimal::compare(const Decimal& a, bool lt) {
    return mantissa > a.mantissa;
 }
 
+inline __host__ __device__
+Decimal& Decimal::copyIn(Decimal d) {
+   negative = d.negative;
+   exponent = d.exponent;
+   mantissa = d.mantissa;
+   return *this;
+}
+
 __host__ __device__
 Decimal::Decimal(unsigned int i) {
    negative = false;
@@ -994,3 +1002,12 @@ bool Decimal::operator<=(const uint32_t a) {
    return operator<=(r);
 }
 
+__host__ __device__
+Decimal& Decimal::operator+=(const Decimal& d) {
+   return copyIn(operator+(d));
+}
+
+__host__ __device__
+Decimal& Decimal::operator/=(const Decimal& d) {
+   return copyIn(operator/(d));
+}
