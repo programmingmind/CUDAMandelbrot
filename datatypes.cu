@@ -68,7 +68,7 @@ unsigned int log2(uint32_t n) {
       n >>= 1;
       ++i;
    }
-   return i;
+   return i - 1;
 }
 
 __host__ __device__
