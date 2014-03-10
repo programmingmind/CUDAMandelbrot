@@ -897,11 +897,11 @@ Decimal& Decimal::operator=(const Decimal& a) {
 __host__ __device__
 Decimal Decimal::operator+(const Decimal& a) {
    if (exponent != a.exponent) {
-      Decimal tmp((exponent < a.exponent) ? *this : a);
+      Decimal tmp((exponent < a.exponent) ? a : *this);
       tmp.mantissa <<= abs(a.exponent - exponent);
-      tmp.exponent = max(exponent, a.exponent);
+      tmp.exponent = min(exponent, a.exponent);
 
-      return (exponent < a.exponent) ? (tmp + a) : (operator+(tmp));
+      return (exponent < a.exponent) ? operator+(tmp) : (tmp + a);
    }
 
    Decimal tmp(a);
@@ -909,7 +909,7 @@ Decimal Decimal::operator+(const Decimal& a) {
       tmp.mantissa += mantissa;
    } else {
       if (mantissa == a.mantissa)
-         return Decimal((unsigned int) 0);
+         return Decimal(0U);
       else if (mantissa < a.mantissa) {
          tmp.negative = a.negative;
          tmp.mantissa -= mantissa;
@@ -926,11 +926,11 @@ Decimal Decimal::operator+(const Decimal& a) {
 __host__ __device__
 Decimal Decimal::operator-(const Decimal& a) {
    if (exponent != a.exponent) {
-      Decimal tmp((exponent < a.exponent) ? *this : a);
+      Decimal tmp((exponent < a.exponent) ? a : *this);
       tmp.mantissa <<= abs(a.exponent - exponent);
-      tmp.exponent = max(exponent, a.exponent);
+      tmp.exponent = min(exponent, a.exponent);
 
-      return (exponent < a.exponent) ? (tmp - a) : (operator-(tmp));
+      return (exponent < a.exponent) ? operator-(tmp) : (tmp - a);
    }
 
    Decimal tmp(a);
@@ -999,11 +999,11 @@ bool Decimal::operator==(const Decimal& a) {
       return false;
 
    if (exponent != a.exponent) {
-      Decimal tmp((exponent < a.exponent) ? *this : a);
+      Decimal tmp((exponent < a.exponent) ? a : *this);
       tmp.mantissa <<= abs(a.exponent - exponent);
-      tmp.exponent = max(exponent, a.exponent);
+      tmp.exponent = min(exponent, a.exponent);
 
-      return (exponent < a.exponent) ? (tmp.mantissa == a.mantissa) : (mantissa == tmp.mantissa);
+      return (exponent < a.exponent) ? operator==(tmp) : (tmp == a);
    }
 
    return mantissa == a.mantissa;
