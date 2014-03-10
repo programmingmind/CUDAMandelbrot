@@ -72,7 +72,7 @@ int log2(uint32_t n) {
       n >>= 1;
       ++i;
    }
-   
+
    return i;
 }
 
@@ -823,9 +823,20 @@ Decimal::Decimal(float f) {
    } q;
    q.f = f;
 
+   int leading = 1;
+
    negative = (q.i >> 31) != 0;
-   exponent = ((q.i >> 23) & ((1 << 8) - 1)) - ((1 << 7) - 1);
-   mantissa = (q.i & ((1 << 23) - 1)) | (1 << 23);
+
+   exponent = ((q.i >> 23) & ((1 << 8) - 1));
+   if (exponent == 0)
+      leading = 0;
+
+   mantissa = (q.i & ((1 << 23) - 1)) | (leading << 23);
+   if (mantissa > 0) {
+      int low = mantissa.binlog();
+      mantissa >>= low;
+      exponent-= ((1 << 7) - 1) + 23 - low;
+   }
 }
 
 __host__ __device__
@@ -836,14 +847,21 @@ Decimal::Decimal(double d) {
    } q;
    q.d = d;
 
+   uint64_t leading = 1ULL;
+
    mantissa.resize(8);
    negative = (q.i >> 63) != 0;
-   exponent = ((q.i >> 52) & ((1 << 11) - 1)) - ((1 << 10) - 1);
-   mantissa = (uint64_t) ((q.i & ((1ULL << 52) - 1)) | (1ULL << 52));
 
-   int low = mantissa.binlog();
-   mantissa >>= low;
-   exponent -= 52 - low;
+   exponent = ((q.i >> 52) & ((1 << 11) - 1));
+   if (exponent == 0)
+      leading = 0;
+
+   mantissa = (uint64_t) ((q.i & ((1ULL << 52) - 1)) | (leading << 52));
+   if (mantissa > 0) {
+      int low = mantissa.binlog();
+      mantissa >>= low;
+      exponent -= ((1 << 10) - 1) + 52 - low;
+   }
 }
 
 __host__ __device__
