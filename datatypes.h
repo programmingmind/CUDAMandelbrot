@@ -47,9 +47,6 @@ private:
    Number& copyIn(Number a);
 
    HOST DEVICE
-   bool isBase2() const;
-
-   HOST DEVICE
    int topBytesEmpty() const;
 
    HOST DEVICE
@@ -91,6 +88,9 @@ public:
    int binlog() const;
 
    HOST DEVICE
+   bool isBase2() const;
+
+   HOST DEVICE
    Number& operator=(const Number& a);
 
    HOST DEVICE
@@ -112,7 +112,7 @@ public:
    Number operator/(const Number& aN);
 
    HOST DEVICE
-   Number operator<<(const int a);
+   Number operator<<(const int a) const;
 
    HOST DEVICE
    Number operator>>(const int a);

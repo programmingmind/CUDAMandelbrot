@@ -101,27 +101,6 @@ Number& Number::copyIn(Number a) {
 }
 
 __host__ __device__
-bool Number::isBase2() const {
-   bool base2Seen = false;
-
-   uint32_t *ptr = (uint32_t *) data;
-   int len = numBytes >> 2;
-   for (int i = 0; i < len; i++) {
-      if (ptr[i] != 0) {
-         if (numBase2(ptr[i])) {
-            if (base2Seen)
-               return false;
-            base2Seen = true;
-         }
-         else
-            return false;
-      }
-   }
-
-   return true;
-}
-
-__host__ __device__
 int Number::topBytesEmpty() const {
    int len = numBytes;
    unsigned char *ptr = (unsigned char*)data;
@@ -257,6 +236,27 @@ int Number::binlog() const {
          return i*32 + log2(ptr[i]);
 
    return 0;
+}
+
+__host__ __device__
+bool Number::isBase2() const {
+   bool base2Seen = false;
+
+   uint32_t *ptr = (uint32_t *) data;
+   int len = numBytes >> 2;
+   for (int i = 0; i < len; i++) {
+      if (ptr[i] != 0) {
+         if (numBase2(ptr[i])) {
+            if (base2Seen)
+               return false;
+            base2Seen = true;
+         }
+         else
+            return false;
+      }
+   }
+
+   return true;
 }
 
 __host__ __device__
@@ -418,7 +418,7 @@ Number Number::operator/(const Number& aN) {
 }
 
 __host__ __device__
-Number Number::operator<<(const int a) {
+Number Number::operator<<(const int a) const {
    int bytes = a / 8;
    int bits = a % 8;
 
@@ -957,7 +957,11 @@ Decimal Decimal::operator*(const Decimal& a) {
 
    tmp.negative ^= negative;
    tmp.exponent += exponent;
-   tmp.mantissa *= mantissa;
+
+   if (a.mantissa.isBase2())
+      tmp.exponent += a.mantissa.binlog();
+   else
+      tmp.mantissa *= mantissa;
 
    return tmp;
 }
@@ -968,7 +972,11 @@ Decimal Decimal::operator/(const Decimal& a) {
 
    tmp.negative ^= a.negative;
    tmp.exponent -= a.exponent;
-   tmp.mantissa /= a.mantissa;
+
+   if (a.mantissa.isBase2())
+      tmp.exponent -= a.mantissa.binlog();
+   else
+      tmp.mantissa /= a.mantissa;
 
    return tmp;
 }
