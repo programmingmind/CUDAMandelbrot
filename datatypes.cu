@@ -62,13 +62,18 @@ numType min(numType a, numType b) {
 }
 
 __host__ __device__
-unsigned int log2(uint32_t n) {
-   unsigned int i = 0;
-   while (n) {
+int log2(uint32_t n) {
+   int i = 0;
+
+   if (!n)
+      return -1;
+
+   while (!(n & 1)) {
       n >>= 1;
       ++i;
    }
-   return i - 1;
+   
+   return i;
 }
 
 __host__ __device__
@@ -114,19 +119,6 @@ bool Number::isBase2() const {
    }
 
    return true;
-}
-
-// returns exponent of first high bit
-__host__ __device__
-int Number::binlog() const {
-   uint32_t *ptr = (uint32_t *) data;
-   int len = numBytes >> 2;
-
-   for (int i = 0; i < len; i++)
-      if (ptr[i] != 0)
-         return i*32 + log2(ptr[i]);
-
-   return 0;
 }
 
 __host__ __device__
@@ -252,6 +244,19 @@ void Number::resize(int bytes) {
    free(data);
    numBytes = nextBase2(max(bytes, MIN_BYTES));
    data = malloc(numBytes);
+}
+
+// returns exponent of first high bit
+__host__ __device__
+int Number::binlog() const {
+   uint32_t *ptr = (uint32_t *) data;
+   int len = numBytes >> 2;
+
+   for (int i = 0; i < len; i++)
+      if (ptr[i] != 0)
+         return i*32 + log2(ptr[i]);
+
+   return 0;
 }
 
 __host__ __device__
@@ -819,8 +824,8 @@ Decimal::Decimal(float f) {
    q.f = f;
 
    negative = (q.i >> 31) != 0;
-   exponent = (q.i >> 23) & ((1 << 8) - 1);
-   mantissa = q.i & ((1 << 23) - 1);
+   exponent = ((q.i >> 23) & ((1 << 8) - 1)) - ((1 << 7) - 1);
+   mantissa = (q.i & ((1 << 23) - 1)) | (1 << 23);
 }
 
 __host__ __device__
@@ -833,8 +838,12 @@ Decimal::Decimal(double d) {
 
    mantissa.resize(8);
    negative = (q.i >> 63) != 0;
-   exponent = (q.i >> 52) & ((1 << 11) - 1);
-   mantissa = (uint64_t) (q.i & ((1ULL << 52) - 1));
+   exponent = ((q.i >> 52) & ((1 << 11) - 1)) - ((1 << 10) - 1);
+   mantissa = (uint64_t) ((q.i & ((1ULL << 52) - 1)) | (1ULL << 52));
+
+   int low = mantissa.binlog();
+   mantissa >>= low;
+   exponent -= 52 - low;
 }
 
 __host__ __device__

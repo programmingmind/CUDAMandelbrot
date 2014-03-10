@@ -49,10 +49,6 @@ private:
    HOST DEVICE
    bool isBase2() const;
 
-   // returns exponent of first high bit
-   HOST DEVICE
-   int binlog() const;
-
    HOST DEVICE
    int topBytesEmpty() const;
 
@@ -89,6 +85,10 @@ public:
 
    HOST DEVICE
    void resize(int bytes);
+
+   // returns exponent of first high bit
+   HOST DEVICE
+   int binlog() const;
 
    HOST DEVICE
    Number& operator=(const Number& a);
