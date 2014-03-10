@@ -170,7 +170,7 @@ splitInfo_t Number::split() const {
 
    int num32 = (tmp.numBytes - tmp.topBytesEmpty() + 3) / 4; // ceil
    if (num32 == 1) {
-      tmp << 32;
+      tmp <<= 32;
       ++num32;
       info.extra += 2;
    }
@@ -381,7 +381,7 @@ Number Number::operator/(const Number& aN) {
    c = split();
 
    int limit = c.len - a.len + 1;
-   int64_t *b = (int64_t *) malloc((limit - 1) * 8);
+   int64_t *b = (int64_t *) malloc(limit * 8);
 
    int64_t tmp = c.data[0] * BASE_SQR + c.data[1];
    b[0] = (tmp / a.data[0]);
@@ -400,7 +400,8 @@ Number Number::operator/(const Number& aN) {
    free(a.data);
    free(c.data);
 
-   Number n = comb(b, limit - 1);
+   Number n = comb(b, limit);
+   free(b);
    int shift = 16 * ((a.extra - c.extra) - 2 * max(0, (int) (1 + a.len - c.len)));
 
    if (shift == 0)
