@@ -3,13 +3,18 @@
 #include <iostream>
 #include <string>
 
+static bool onlyErrors = false;
+
 void printResult(std::string prefix, bool b) {
-   std::cout << prefix << ": " << (b ? "pass" : "!!FAIL!!") << std::endl;
+   if (!b || !onlyErrors)
+      std::cout << prefix << ": " << (b ? "pass" : "!!FAIL!!") << std::endl;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
    unsigned int l = 0x56af6f4d;
    unsigned int r = 0x2308ffed;
+
+   onlyErrors = argc > 1;
 
    int i = 4;
    Number four(&i, 4);
