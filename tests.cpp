@@ -4,7 +4,7 @@
 #include <string>
 
 void printResult(std::string prefix, bool b) {
-   std::cout << prefix << ": " << (b ? "pass" : "fail") << std::endl;
+   std::cout << prefix << ": " << (b ? "pass" : "!!FAIL!!") << std::endl;
 }
 
 int main() {
@@ -123,10 +123,20 @@ int main() {
    mod += 1024;
    printResult("modulus without remainder", mod % 32 == 0);
 
+   printResult("float vs double constructor 1", Decimal(5.0) == Decimal(5.0f));
+   printResult("float vs double constructor 2", Decimal(7.25) == Decimal(7.25f));
+   printResult("float vs double constructor 3", Decimal(0.0) == Decimal(0.0f));
+   printResult("float vs double constructor 4", Decimal(-1.375) == Decimal(-1.375f));
+
+   printResult("Number vs double constructor", Decimal(5.0) == Decimal(5U));
+
+   printResult("constructor with 0", Decimal(0.0) == 0U);
+
    Decimal dFour(4.0);
    Decimal dTwelve(12.0);
    Decimal dSixteen(16.0);
 
+   std::cout<<"zero   : " << Decimal(0.0) << std::endl;
    std::cout<<"four   : " << dFour << std::endl;
    std::cout<<"twelve : " << dTwelve << std::endl;
    std::cout<<"sixteen: " << dSixteen << std::endl;
