@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
    printResult("decimal neg less than zero", dNegSixteen < dZero);
 
    printResult("decimal neg addition", dSixteen + dNegFour == dTwelve);
-   printResult("decimal neg subtraction", dFour - dNegTwelve == dNegSixteen);
+   printResult("decimal neg subtraction", dFour - dNegTwelve == dSixteen);
    printResult("decimal neg multiplcation", dFour * dNegTwelve == dNegFortyEight);
    printResult("decimal neg division", dNegFortyEight / dNegThree == dSixteen);
 
