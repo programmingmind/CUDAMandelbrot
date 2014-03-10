@@ -123,9 +123,9 @@ int main() {
    mod += 1024;
    printResult("modulus without remainder", mod % 32 == 0);
 
-   Decimal dFour(4U);
-   Decimal dTwelve(12U);
-   Decimal dSixteen(16U);
+   Decimal dFour(4.0);
+   Decimal dTwelve(12.0);
+   Decimal dSixteen(16.0);
 
    printResult("decimal addition", dFour + dTwelve == dSixteen);
    printResult("decimal subtraction", dSixteen - dTwelve == dFour);
@@ -135,9 +135,23 @@ int main() {
    printResult("decimal greater than", dTwelve > dFour);
    printResult("decimal less than", dTwelve < dSixteen);
 
-   Decimal dAssign(0U);
+   Decimal dAssign(0.0);
    dAssign = dFour;
    printResult("decimal assign", dAssign == dFour);
+
+   Decimal dNegThree(-3.0);
+   Decimal dNegFour(-4.0);
+   Decimal dNegTwelve(-12.0);
+   Decimal dNegSixteen(-16.0);
+   Decimal dNegFortyEight(-48.0);
+
+   printResult("decimal neg addition", dSixteen + dNegFour == dTwelve);
+   printResult("decimal neg subtraction", dFour - dNegTwelve == dNegSixteen);
+   printResult("decimal neg multiplcation", dFour * dNegTwelve == dNegFortyEight);
+   printResult("decimal neg division", dNegFortyEight / dNegThree == dSixteen);
+
+   printResult("decimal neg greater than", dNegTwelve > dNegSixteen);
+   printResult("decimal neg less than", dNegSixteen < dNegFour);
 
    return 0;
 }
