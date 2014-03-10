@@ -279,6 +279,9 @@ public:
    Decimal(const Decimal& d);
 
    HOST DEVICE
+   Number getMantissa();
+
+   HOST DEVICE
    Decimal& operator=(const Decimal& a);
 
    HOST DEVICE

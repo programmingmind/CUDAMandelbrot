@@ -777,23 +777,22 @@ std::ostream& operator<<(std::ostream& os, const Number& n) {
 
 __host__ __device__
 bool Decimal::compare(const Decimal& a, bool lt) {
-   if (negative && !a.negative)
-      return lt;
-   if (!negative && a.negative)
-      return ! lt;
+   if (negative != a.negative)
+      return negative ? lt : !lt;
 
    if (exponent != a.exponent) {
-      Decimal tmp((exponent < a.exponent) ? *this : a);
+      Decimal tmp((exponent < a.exponent) ? a : *this);
       tmp.mantissa <<= abs(a.exponent - exponent);
-      tmp.exponent = max(exponent, a.exponent);
+      tmp.exponent = min(exponent, a.exponent);
 
-      return (exponent < a.exponent) ? tmp.compare(a, lt) : compare(tmp, lt);
+      return (exponent < a.exponent) ? compare(tmp, lt) : tmp.compare(a, lt);
    }
 
-   if (lt)
-     return mantissa < a.mantissa;
-
-   return mantissa > a.mantissa;
+   if (mantissa < a.mantissa)
+      return negative ? !lt : lt;
+   else if (mantissa > a.mantissa)
+      return negative ? lt : !lt;
+   return false;
 }
 
 inline __host__ __device__
@@ -850,6 +849,11 @@ Decimal::Decimal(const Decimal& d) {
    negative = d.negative;
    exponent = d.exponent;
    mantissa = d.mantissa;
+}
+
+__host__ __device__
+Number Decimal::getMantissa() {
+   return mantissa;
 }
 
 __host__ __device__
