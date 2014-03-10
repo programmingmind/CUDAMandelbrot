@@ -118,10 +118,26 @@ int main() {
    uint32_t remainder = 3191376254LL;
 
    printResult("modulus with remainder", mod % div == remainder);
-   
+
    mod &= 0;
    mod += 1024;
    printResult("modulus without remainder", mod % 32 == 0);
+
+   Decimal dFour(4U);
+   Decimal dTwelve(12U);
+   Decimal dSixteen(16U);
+
+   printResult("decimal addition", dFour + dTwelve == dSixteen);
+   printResult("decimal subtraction", dSixteen - dTwelve == dFour);
+   printResult("decimal multiplication", dFour * dFour == dSixteen);
+   printResult("decimal division", dSixteen / dFour == dFour);
+
+   printResult("decimal greater than", dTwelve > dFour);
+   printResult("decimal less than", dTwelve < dSixteen);
+
+   Decimal dAssign(0U);
+   dAssign = dFour;
+   printResult("decimal assign", dAssign == dFour);
 
    return 0;
 }
