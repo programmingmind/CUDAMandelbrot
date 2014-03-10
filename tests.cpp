@@ -145,6 +145,10 @@ int main() {
    Decimal dNegSixteen(-16.0);
    Decimal dNegFortyEight(-48.0);
 
+   Decimal dZero(0.0);
+   printResult("decimal greater than zero", dSixteen > dZero);
+   printResult("decimal neg less than zero", dNegSixteen < dZero);
+
    printResult("decimal neg addition", dSixteen + dNegFour == dTwelve);
    printResult("decimal neg subtraction", dFour - dNegTwelve == dNegSixteen);
    printResult("decimal neg multiplcation", dFour * dNegTwelve == dNegFortyEight);

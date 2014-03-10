@@ -833,7 +833,7 @@ Decimal::Decimal(double d) {
    q.d = d;
 
    mantissa.resize(8);
-   negative = q.i & (1ULL << 63);
+   negative = (q.i >> 63) != 0;
    exponent = (q.i >> 52) & ((1 << 11) - 1);
    mantissa = (uint64_t) (q.i & ((1ULL << 52) - 1));
 }
