@@ -328,6 +328,9 @@ public:
 
    HOST DEVICE
    Decimal& operator/=(const Decimal& d);
+
+   HOST
+   friend std::ostream& operator<<(std::ostream& os, const Decimal& d);
 };
 
 #endif

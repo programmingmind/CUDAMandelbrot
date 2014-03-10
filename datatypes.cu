@@ -1015,3 +1015,9 @@ __host__ __device__
 Decimal& Decimal::operator/=(const Decimal& d) {
    return copyIn(operator/(d));
 }
+
+__host__
+std::ostream& operator<<(std::ostream& os, const Decimal& d) {
+   os << "{negative: " << d.negative << ", exponent: " << d.exponent << ", mantissa: " << d.mantissa << "}";
+   return os;
+}

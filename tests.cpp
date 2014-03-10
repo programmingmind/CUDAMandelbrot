@@ -127,7 +127,9 @@ int main() {
    Decimal dTwelve(12.0);
    Decimal dSixteen(16.0);
 
-   std::cout<<dFour.getMantissa()<<"\t"<<dTwelve.getMantissa()<<"\t"<<dSixteen.getMantissa()<<std::endl;
+   std::cout<<"four   : " << dFour << std::endl;
+   std::cout<<"twelve : " << dTwelve << std::endl;
+   std::cout<<"sixteen: " << dSixteen << std::endl;
 
    printResult("decimal addition", dFour + dTwelve == dSixteen);
    printResult("decimal subtraction", dSixteen - dTwelve == dFour);
