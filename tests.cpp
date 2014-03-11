@@ -93,8 +93,6 @@ int main(int argc, char *argv[]) {
    printResult("division #3", (nThree / nThree) == 1U);
    printResult("division #4", (nFortyEight / nThree) == 16U);
 
-   std::cout<<(nFortyEight / nThree)<<std::endl;
-
    uint64_t prod16 = 0x56af6f4d0ULL;
    Number n16(&prod16, 8);
 
@@ -160,8 +158,6 @@ int main(int argc, char *argv[]) {
    printResult("decimal multiplication", dFour * dFour == dSixteen);
    printResult("decimal division", dSixteen / dFour == dFour);
    printResult("decimal division 2", Decimal(48U) / Decimal(3.0) == dSixteen);
-
-   std::cout<< (Decimal(48U) / Decimal(3.0)) << std::endl;
 
    printResult("decimal greater than", dTwelve > dFour);
    printResult("decimal less than", dTwelve < dSixteen);

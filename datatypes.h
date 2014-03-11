@@ -56,9 +56,6 @@ private:
    splitInfo_t split() const;
 
    HOST DEVICE
-   static Number comb(int64_t *l, int len);
-
-   HOST DEVICE
    uint32_t getLSU32() const;
 
    HOST DEVICE

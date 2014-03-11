@@ -157,25 +157,6 @@ splitInfo_t Number::split() const {
 }
 
 __host__ __device__
-Number Number::comb(int64_t *l, int len) {
-   Number n(4 * len);
-   memset(n.data, 0, n.numBytes);
-
-   for (int i = 0; i < len; i++) {
-      n <<= 32;
-      bool sub = l[i] < 0;
-      uint32_t val = unsignedAbs(l[i]);
-
-      if (sub)
-         n -= val;
-      else
-         n += val;
-   }
-
-   return n;
-}
-
-__host__ __device__
 uint32_t Number::getLSU32() const {
    return *((uint32_t *) data);
 }
@@ -411,7 +392,7 @@ Number Number::operator/(const Number& aN) {
    free(a.data);
    free(c.data);
 
-   Number n = comb(b, limit);
+   Number n(b, 8 * limit);
    free(b);
    int shift = 16 * ((a.extra - c.extra) - 2 * max(0, (int) (1 + a.len - c.len)));
 
