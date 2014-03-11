@@ -5,7 +5,7 @@
 
 typedef Decimal data_t;
 
-#define BLOCK_LEN 32
+#define BLOCK_LEN 8
 
 void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters);
 

@@ -241,7 +241,7 @@ public:
    void* getData();
 
    HOST DEVICE
-   int getSize();
+   int getSize() const;
 
    HOST
    friend std::ostream& operator<<(std::ostream& os, const Number& n);

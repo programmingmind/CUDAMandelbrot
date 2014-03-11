@@ -742,7 +742,7 @@ void* Number::getData() {
 }
 
 __host__ __device__
-int Number::getSize() {
+int Number::getSize() const {
    return numBytes;
 }
 
@@ -796,14 +796,14 @@ Decimal& Decimal::copyIn(Decimal d) {
 }
 
 __host__ __device__
-Decimal::Decimal(unsigned int i) {
+Decimal::Decimal(unsigned int i) : mantissa(4) {
    negative = false;
    exponent = 0;
    mantissa = i;
 }
 
 __host__ __device__
-Decimal::Decimal(float f) {
+Decimal::Decimal(float f) : mantissa(4) {
    union {
       float f;
       uint32_t i;
@@ -827,7 +827,7 @@ Decimal::Decimal(float f) {
 }
 
 __host__ __device__
-Decimal::Decimal(double d) {
+Decimal::Decimal(double d) : mantissa(8) {
    union {
       double d;
       uint64_t i;
@@ -836,7 +836,6 @@ Decimal::Decimal(double d) {
 
    uint64_t leading = 1ULL;
 
-   mantissa.resize(8);
    negative = (q.i >> 63) != 0;
 
    exponent = ((q.i >> 52) & ((1 << 11) - 1));
@@ -852,14 +851,14 @@ Decimal::Decimal(double d) {
 }
 
 __host__ __device__
-Decimal::Decimal(Number &n) {
+Decimal::Decimal(Number &n) : mantissa(n.getSize()) {
    negative = false;
    exponent = 0;
    mantissa = n;
 }
 
 __host__ __device__
-Decimal::Decimal(const Decimal& d) {
+Decimal::Decimal(const Decimal& d) : mantissa(d.mantissa.getSize()) {
    negative = d.negative;
    exponent = d.exponent;
    mantissa = d.mantissa;
