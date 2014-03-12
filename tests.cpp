@@ -110,13 +110,6 @@ int main(int argc, char *argv[]) {
    Number nFortyEight(4);
    nFortyEight = 48U;
 
-   std::cout<<(nThree << 4)<<std::endl;
-   std::cout<<(nThree << 64)<<std::endl;
-   std::cout<<(nThree << 32)<<std::endl;
-   std::cout<<(nThree << 68)<<std::endl;
-
-   std::cout<<(nThree << 68)/480U<<std::endl;
-
    printResult("division #1", (a*b)/a, b);
    printResult("division #2", (a*b)/b, a);
    printResult("division #3", (nThree / nThree), 1U);
@@ -218,13 +211,6 @@ int main(int argc, char *argv[]) {
    Decimal startY = -1.00;
    Decimal resolution = INITIAL_RESOLUTION;
 
-   std::cout<<startX<<"\t"<<startY<<std::endl;
-
-   std::cout<<"resolution: " << resolution<<std::endl;
-   std::cout<<resolution/WIDTH<<std::endl;
-   std::cout<<(resolution*2U)/WIDTH<<std::endl;
-   std::cout<<startX + resolution/WIDTH<<std::endl;
-
    for (unsigned int xNdx = 2; xNdx < 3; xNdx++) {
       for (unsigned int yNdx = 2; yNdx < 3; yNdx++) {
          Decimal x0(0U), y0(0U);
@@ -232,11 +218,8 @@ int main(int argc, char *argv[]) {
          x0 = startX + ((resolution * xNdx) / WIDTH);
          y0 = startY + ((resolution * yNdx) / HEIGHT);
 
-         printResult("x0", x0, Decimal(-1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH)));
-         printResult("y0", y0, Decimal(-1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT)));
-
-         std::cout << x0 << "\t" << (-1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH)) << std::endl;
-         std::cout << y0 << "\t" << (-1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT)) << std::endl;
+         printResult("x0", x0, -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH));
+         printResult("y0", y0, -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT));
       }
    }  
 
