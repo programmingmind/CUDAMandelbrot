@@ -245,6 +245,9 @@ public:
 
    HOST
    friend std::ostream& operator<<(std::ostream& os, const Number& n);
+
+   HOST DEVICE
+   Number absVal();
 };
 
 class Decimal {
@@ -328,6 +331,9 @@ public:
 
    HOST
    friend std::ostream& operator<<(std::ostream& os, const Decimal& d);
+
+   HOST DEVICE
+   Decimal absVal();
 };
 
 #endif

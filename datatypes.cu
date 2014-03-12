@@ -768,6 +768,11 @@ std::ostream& operator<<(std::ostream& os, const Number& n) {
 }
 
 __host__ __device__
+Number Number::absVal() {
+   return *this;
+}
+
+__host__ __device__
 bool Decimal::compare(const Decimal& a, bool lt) {
    if (negative != a.negative)
       return negative ? lt : !lt;
@@ -1047,4 +1052,11 @@ __host__
 std::ostream& operator<<(std::ostream& os, const Decimal& d) {
    os << "{negative: " << d.negative << ", exponent: " << d.exponent << ", mantissa: " << d.mantissa << "}";
    return os;
+}
+
+__host__ __device__
+Decimal Decimal::absVal() {
+   Decimal tmp(*this);
+   tmp.negative = false;
+   return tmp;
 }

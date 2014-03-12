@@ -8,9 +8,24 @@
 #define WARNING 1
 #define ERROR 2
 
-#define MAX_ERROR 0.0000001
+#define MAX_ERROR 1 /// 0.0000001
 
 static int errorLevel = ALL;
+
+template <typename T>
+T myAbs(T t) {
+   if (t < 0)
+      return t * -1;
+   return t;
+}
+
+Number myAbs(Number n) {
+   return n.absVal();
+}
+
+Decimal myAbs(Decimal d) {
+   return d.absVal();
+}
 
 // use this for equality
 template <typename DataType, typename CompareType>
@@ -18,9 +33,9 @@ void printResult(std::string prefix, DataType a, CompareType b, bool exact = tru
    if (a == b) {
       if (errorLevel <= ALL)
          std::cout << prefix << ": " << "pass" << std::endl;
-   } else if (!exact && (a >= b ? ((a - b) < MAX_ERROR) : ((a - b) > -MAX_ERROR))) {
+   } else if (!exact && myAbs(a - b) < MAX_ERROR) {
       if (errorLevel <= WARNING)
-         std::cout << prefix << ": " << "Warn (diff: " << (a - b) << ") -- " << a << "\t" << b << std::endl;
+         std::cout << prefix << ": " << "Warn (diff: " << myAbs(a - b) << ") -- " << a << "\t" << b << std::endl;
    } else {
       std::cout << prefix << ": " << "!!FAIL!! -- " << a << "\t" << b << std::endl;
    }
@@ -206,13 +221,16 @@ int main(int argc, char *argv[]) {
    printResult("decimal neg greater than", dNegTwelve > dNegSixteen);
    printResult("decimal neg less than", dNegSixteen < dNegFour);
 
+   printResult("decimal pos minus neg result", dTwelve - dSixteen, dNegFour);
+   printResult("decimal pos minus neg result #2", Decimal(1.5) - Decimal(2.875), -1.375);
+
    // Mandelbrot tests
    Decimal startX = -1.50;
    Decimal startY = -1.00;
    Decimal resolution = INITIAL_RESOLUTION;
 
-   for (unsigned int xNdx = 2; xNdx < 3; xNdx++) {
-      for (unsigned int yNdx = 2; yNdx < 3; yNdx++) {
+   for (unsigned int xNdx = 3; xNdx < 4; xNdx++) {
+      for (unsigned int yNdx = 3; yNdx < 4; yNdx++) {
          Decimal x0(0U), y0(0U);
 
          x0 = startX + ((resolution * xNdx) / WIDTH);
@@ -224,10 +242,18 @@ int main(int argc, char *argv[]) {
          printResult("(resolution * xNdx) / WIDTH", (resolution * xNdx) / WIDTH, (INITIAL_RESOLUTION * xNdx) / WIDTH, false);
          printResult("(resolution * yNdx) / HEIGHT", (resolution * yNdx) / HEIGHT, (INITIAL_RESOLUTION * yNdx) / HEIGHT, false);
 
-         printResult("x0", x0, -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH), false);
-         printResult("y0", y0, -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT), false);
+         printResult("x0", Decimal(-1.50) + ((resolution * xNdx) / WIDTH), -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH), false);
+         printResult("y0", Decimal(-1.00) + ((resolution * yNdx) / HEIGHT), -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT), false);
+
+         printResult("x0", startX + ((resolution * xNdx) / WIDTH), -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH), false);
+         printResult("y0", startY + ((resolution * yNdx) / HEIGHT), -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT), false);
+
+         printResult("x0 ==", x0, startX + ((resolution * xNdx) / WIDTH), false);
+         printResult("y0 ==", y0, startY + ((resolution * yNdx) / HEIGHT), false);
       }
-   }  
+   }
+
+   std::cout << Decimal(-0.00416667) << std::endl;
 
    return 0;
 }
