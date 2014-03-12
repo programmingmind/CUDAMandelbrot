@@ -166,8 +166,8 @@ void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolutio
       for (int j = 0; j < WIDTH; j++) {
          count = 0;
          
-         for (int k = max(0, i - STD_DEV_RADIUS); k <= min(HEIGHT - 1, i + STD_DEV_RADIUS); k++)
-            for (int l = max(0, j - STD_DEV_RADIUS); l <= min(WIDTH - 1, j + STD_DEV_RADIUS); l++)
+         for (int k = max(0, i - STD_DEV_RADIUS); k <= min<int>(HEIGHT - 1, i + STD_DEV_RADIUS); k++)
+            for (int l = max(0, j - STD_DEV_RADIUS); l <= min<int>(WIDTH - 1, j + STD_DEV_RADIUS); l++)
                subIter[count++] = getColor(iters[k * WIDTH + l]);
          
          insertSorted(stdDevs, &varCount, subIter, count, j, i);
