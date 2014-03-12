@@ -239,8 +239,11 @@ int main(int argc, char *argv[]) {
          printResult("resolution * xNdx", resolution * xNdx, INITIAL_RESOLUTION * xNdx);
          printResult("resolution * yNdx", resolution * yNdx, INITIAL_RESOLUTION * yNdx);
 
-         std::cout<<((resolution * xNdx) / WIDTH) - ((INITIAL_RESOLUTION * xNdx) / WIDTH)<<std::endl;
+         std::cout<<(resolution * xNdx) / WIDTH<<std::endl;
+         std::cout<<Decimal((INITIAL_RESOLUTION * xNdx) / WIDTH)<<std::endl;
          std::cout<<myAbs(((resolution * xNdx) / WIDTH) - ((INITIAL_RESOLUTION * xNdx) / WIDTH))<<std::endl;
+         std::cout<<Decimal(MAX_ERROR)<<std::endl;
+         printResult("less than error", myAbs(((resolution * xNdx) / WIDTH) - ((INITIAL_RESOLUTION * xNdx) / WIDTH)) < Decimal(MAX_ERROR));
 
          printResult("(resolution * xNdx) / WIDTH", (resolution * xNdx) / WIDTH, (INITIAL_RESOLUTION * xNdx) / WIDTH, false);
          printResult("(resolution * yNdx) / HEIGHT", (resolution * yNdx) / HEIGHT, (INITIAL_RESOLUTION * yNdx) / HEIGHT, false);
