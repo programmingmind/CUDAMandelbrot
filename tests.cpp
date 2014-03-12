@@ -218,8 +218,14 @@ int main(int argc, char *argv[]) {
          x0 = startX + ((resolution * xNdx) / WIDTH);
          y0 = startY + ((resolution * yNdx) / HEIGHT);
 
-         printResult("x0", x0, -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH));
-         printResult("y0", y0, -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT));
+         printResult("resolution * xNdx", resolution * xNdx, INITIAL_RESOLUTION * xNdx);
+         printResult("resolution * yNdx", resolution * yNdx, INITIAL_RESOLUTION * yNdx);
+
+         printResult("(resolution * xNdx) / WIDTH", (resolution * xNdx) / WIDTH, (INITIAL_RESOLUTION * xNdx) / WIDTH, false);
+         printResult("(resolution * yNdx) / HEIGHT", (resolution * yNdx) / HEIGHT, (INITIAL_RESOLUTION * yNdx) / HEIGHT, false);
+
+         printResult("x0", x0, -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH), false);
+         printResult("y0", y0, -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT), false);
       }
    }  
 
