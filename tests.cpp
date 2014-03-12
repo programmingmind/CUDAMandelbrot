@@ -8,7 +8,7 @@
 #define WARNING 1
 #define ERROR 2
 
-#define MAX_ERROR 1 /// 0.0000001
+#define MAX_ERROR 0.0000001
 
 static int errorLevel = ALL;
 
@@ -238,6 +238,9 @@ int main(int argc, char *argv[]) {
 
          printResult("resolution * xNdx", resolution * xNdx, INITIAL_RESOLUTION * xNdx);
          printResult("resolution * yNdx", resolution * yNdx, INITIAL_RESOLUTION * yNdx);
+
+         std::cout<<((resolution * xNdx) / WIDTH) - ((INITIAL_RESOLUTION * xNdx) / WIDTH)<<std::endl;
+         std::cout<<myAbs(((resolution * xNdx) / WIDTH) - ((INITIAL_RESOLUTION * xNdx) / WIDTH))<<std::endl;
 
          printResult("(resolution * xNdx) / WIDTH", (resolution * xNdx) / WIDTH, (INITIAL_RESOLUTION * xNdx) / WIDTH, false);
          printResult("(resolution * yNdx) / HEIGHT", (resolution * yNdx) / HEIGHT, (INITIAL_RESOLUTION * yNdx) / HEIGHT, false);
