@@ -1,3 +1,4 @@
+#include "common.h"
 #include "datatypes.h"
 
 #include <iostream>
@@ -183,6 +184,24 @@ int main(int argc, char *argv[]) {
 
    printResult("decimal neg greater than", dNegTwelve > dNegSixteen);
    printResult("decimal neg less than", dNegSixteen < dNegFour);
+
+   // Mandelbrot tests
+   Decimal startX = -1.50;
+   Decimal startY = -1.00;
+   Decimal resolution = INITIAL_RESOLUTION;
+
+   unsigned int yNdx, xNdx;
+   for (unsigned int xNdx = 0; xNdx < WIDTH; xNdx++) {
+      for (unsigned int yNdx = 0; yNdx < HEIGHT; yNdx++) {
+         Decimal x0(0U), y0(0U);
+
+         x0 = startX + ((resolution * xNdx) / WIDTH);
+         y0 = startY + ((resolution * yNdx) / HEIGHT);
+
+         printResult("x0", x0 == -1.50 + ((INITIAL_RESOLUTION * xNdx) / WIDTH));
+         printResult("y0", y0 == -1.00 + ((INITIAL_RESOLUTION * yNdx) / HEIGHT));
+      }
+   }  
 
    return 0;
 }

@@ -21,7 +21,7 @@
 
 using namespace std;
 
-#define WIDTH 480
+#define WIDTH 480U
 #define HEIGHT WIDTH
 #define INITIAL_RESOLUTION 2.0
 
