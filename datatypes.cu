@@ -204,6 +204,7 @@ void Number::resize(int bytes) {
    free(data);
    numBytes = nextBase2(max(bytes, MIN_BYTES));
    data = malloc(numBytes);
+   memset(data, 0, numBytes);
 }
 
 // returns exponent of first high bit
@@ -245,8 +246,10 @@ Number& Number::operator=(const Number& a) {
    if (this == &a)
       return *this;
 
-   memset(data, 0, numBytes);
-   memcpy(data, a.data, min(numBytes, a.numBytes));
+   if (numBytes < a.numBytes)
+      resize(a.numBytes);
+
+   memcpy(data, a.data, a.numBytes);
    return *this;
 }
 
