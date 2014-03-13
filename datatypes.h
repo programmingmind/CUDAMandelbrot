@@ -318,6 +318,9 @@ public:
    bool operator<(const uint32_t a);
 
    HOST DEVICE
+   bool operator<(const double a);
+
+   HOST DEVICE
    bool operator>=(const uint32_t a);
 
    HOST DEVICE

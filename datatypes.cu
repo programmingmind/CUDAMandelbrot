@@ -1030,6 +1030,11 @@ bool Decimal::operator<(const uint32_t a) {
 }
 
 __host__ __device__
+bool Decimal::operator<(const double a) {
+   return operator<(Decimal(a));
+}
+
+__host__ __device__
 bool Decimal::operator>=(const uint32_t a) {
    Decimal r(a);
    return operator>=(r);
