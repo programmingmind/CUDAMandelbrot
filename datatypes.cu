@@ -397,7 +397,7 @@ Number Number::operator/(const Number& aN) {
 
    Number n(b, 8 * limit);
    free(b);
-   int shift = 16 * ((a.extra - c.extra) - 2 * max(0, 1 + a.len - c.len));
+   int shift = 16 * ((a.extra - c.extra) - 2); // * (1 + a.len - c.len));
 
    if (shift == 0)
       return n;
