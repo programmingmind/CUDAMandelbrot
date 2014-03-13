@@ -42,7 +42,7 @@ void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
    dim3 dimGrid(1 + (WIDTH - 1)/BLOCK_LEN, 1 + (HEIGHT - 1)/BLOCK_LEN);
    dim3 dimBlock(BLOCK_LEN, BLOCK_LEN);
 
-   cudaDeviceSetLimit(cudaLimitStackSize, 8192);
+   cudaDeviceSetLimit(cudaLimitStackSize, 1024*6);
    cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1073741824);
    iterate<<<dimGrid, dimBlock>>>(x, y, resolution, cuda);
    cudaSafe(cudaPeekAtLastError());
