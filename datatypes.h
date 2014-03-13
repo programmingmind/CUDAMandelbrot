@@ -39,6 +39,7 @@ class Number {
 private:
    void *data;
    int numBytes;
+   bool onDevice;
 
    HOST DEVICE
    bool compare(const Number& a, bool lt);
@@ -248,11 +249,17 @@ public:
 
    HOST DEVICE
    Number absVal();
+
+   HOST
+   Number toDevice() const;
+
+   HOST
+   void deviceFree();
 };
 
 class Decimal {
 private:
-   bool negative;
+   bool negative, onDevice;
    int32_t exponent;
    Number mantissa;
 
@@ -337,6 +344,12 @@ public:
 
    HOST DEVICE
    Decimal absVal();
+
+   HOST
+   Decimal toDevice() const;
+
+   HOST
+   void deviceFree();
 };
 
 #endif

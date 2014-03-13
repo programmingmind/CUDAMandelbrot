@@ -168,18 +168,21 @@ uint32_t Number::getLSU16() const {
 
 __host__ __device__
 Number::Number() {
+   onDevice = false;
    numBytes = MIN_BYTES;
    data = malloc(numBytes);
 }
 
 __host__ __device__
 Number::Number(int bytes) {
+   onDevice = false;
    numBytes = nextBase2(max(bytes, MIN_BYTES));
    data = malloc(numBytes);
 }
 
 __host__ __device__
 Number::Number(const void *bytes, int len) {
+   onDevice = false;
    numBytes = nextBase2(len);
    data = malloc(numBytes);
    memset(data, 0, numBytes);
@@ -189,14 +192,20 @@ Number::Number(const void *bytes, int len) {
 __host__ __device__
 Number::Number(const Number& num) {
    numBytes = num.numBytes;
-   data = malloc(numBytes);
+   onDevice = num.onDevice;
 
-   memcpy(data, num.data, numBytes);
+   if (num.onDevice)
+      data = num.data;
+   else {
+      data = malloc(numBytes);
+      memcpy(data, num.data, numBytes);
+   }
 }
 
 __host__ __device__
 Number::~Number() {
-   free(data);
+   if (! onDevice)
+      free(data);
 }
 
 __host__ __device__
@@ -245,11 +254,19 @@ __host__ __device__
 Number& Number::operator=(const Number& a) {
    if (this == &a)
       return *this;
+   onDevice = a.onDevice;
 
-   if (numBytes < a.numBytes)
-      resize(a.numBytes);
+   if (onDevice) {
+      numBytes = a.numBytes;
+      free(data);
+      data = a.data;
+   } else {
+      if (numBytes < a.numBytes)
+         resize(a.numBytes);
 
-   memcpy(data, a.data, a.numBytes);
+      memcpy(data, a.data, a.numBytes);
+   }
+
    return *this;
 }
 
@@ -775,6 +792,37 @@ Number Number::absVal() {
    return *this;
 }
 
+__host__
+Number Number::toDevice() const {
+#ifdef __CUDACC__
+   if (onDevice)
+      return *this;
+
+   Number t(MIN_BYTES);
+   free(t.data);
+
+   t.numBytes = numBytes;
+   cudaMalloc(& (t.data), numBytes);
+   cudaMemcpy(t.data, data, numBytes, cudaMemcpyHostToDevice);
+
+   return t;
+#else
+   return *this;
+#endif
+}
+
+__host__
+void Number::deviceFree() {
+#ifdef __CUDACC__
+   if (onDevice)
+      cudaFree(data);
+
+   return;
+#else
+   return;
+#endif
+}
+
 __host__ __device__
 bool Decimal::compare(const Decimal& a, bool lt) {
    if (negative != a.negative)
@@ -797,6 +845,7 @@ bool Decimal::compare(const Decimal& a, bool lt) {
 
 inline __host__ __device__
 Decimal& Decimal::copyIn(Decimal d) {
+   onDevice = d.onDevice;
    negative = d.negative;
    exponent = d.exponent;
    mantissa = d.mantissa;
@@ -805,6 +854,7 @@ Decimal& Decimal::copyIn(Decimal d) {
 
 __host__ __device__
 Decimal::Decimal(unsigned int i) : mantissa(4) {
+   onDevice = false;
    negative = false;
    exponent = 0;
    mantissa = i;
@@ -812,6 +862,7 @@ Decimal::Decimal(unsigned int i) : mantissa(4) {
 
 __host__ __device__
 Decimal::Decimal(float f) : mantissa(4) {
+   onDevice = false;
    union {
       float f;
       uint32_t i;
@@ -836,6 +887,7 @@ Decimal::Decimal(float f) : mantissa(4) {
 
 __host__ __device__
 Decimal::Decimal(double d) : mantissa(8) {
+   onDevice = false;
    union {
       double d;
       uint64_t i;
@@ -860,6 +912,7 @@ Decimal::Decimal(double d) : mantissa(8) {
 
 __host__ __device__
 Decimal::Decimal(Number &n) : mantissa(n.getSize()) {
+   onDevice = false;
    negative = false;
    exponent = 0;
    mantissa = n;
@@ -867,6 +920,7 @@ Decimal::Decimal(Number &n) : mantissa(n.getSize()) {
 
 __host__ __device__
 Decimal::Decimal(const Decimal& d) : mantissa(d.mantissa.getSize()) {
+   onDevice = d.onDevice;
    negative = d.negative;
    exponent = d.exponent;
    mantissa = d.mantissa;
@@ -882,9 +936,10 @@ Decimal& Decimal::operator=(const Decimal& a) {
    if (this == &a)
       return *this;
 
+   onDevice = a.onDevice;
    negative = a.negative;
    exponent = a.exponent;
-   mantissa = a.mantissa;
+   mantissa = a.onDevice ? a.mantissa.toDevice() : a.mantissa;
    return *this;
 }
 
@@ -1067,4 +1122,29 @@ Decimal Decimal::absVal() {
    Decimal tmp(*this);
    tmp.negative = false;
    return tmp;
+}
+
+__host__
+Decimal Decimal::toDevice() const {
+#ifdef __CUDACC__
+   if (onDevice)
+      return *this;
+
+   Decimal d(*this);
+   d.onDevice = true;
+   d.mantissa = d.mantissa.toDevice();
+
+   return d;
+#else
+   return *this;
+#endif
+}
+
+__host__
+void Decimal::deviceFree() {
+#ifdef __CUDACC__
+   mantissa.deviceFree();
+#else
+   return;
+#endif
 }
