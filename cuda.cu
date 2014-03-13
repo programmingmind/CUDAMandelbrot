@@ -46,6 +46,7 @@ void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
    data_t dY = y.toDevice();
    data_t dR = resolution.toDevice();
 
+   cudaDeviceSetLimit(cudaLimitStackSize, 1024*6);
    cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1073741824);
    iterate<<<dimGrid, dimBlock>>>(dX, dY, dR, cuda);
    cudaSafe(cudaPeekAtLastError());
