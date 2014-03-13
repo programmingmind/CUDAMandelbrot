@@ -464,11 +464,16 @@ Number Number::operator>>(const int a) const {
    int bytes = a / 8;
    int bits = a % 8;
 
+   if (bytes > numBytes)
+      bytes = numBytes;
+
    Number t(numBytes - bytes);
    memset(t.data, 0, t.numBytes);
 
    unsigned char *ptr = (unsigned char *) t.data;
-   memcpy(ptr, ((char *) data) + bytes, numBytes - bytes);
+   
+   if (bytes < numBytes)
+      memcpy(ptr, ((char *) data) + bytes, numBytes - bytes);
 
    unsigned char mask = (1 << bits) - 1;
    unsigned char under = 0, tmp;
