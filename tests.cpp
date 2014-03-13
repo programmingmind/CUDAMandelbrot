@@ -229,8 +229,8 @@ int main(int argc, char *argv[]) {
    Decimal startY = -1.00;
    Decimal resolution = INITIAL_RESOLUTION;
 
-   for (unsigned int xNdx = 3; xNdx < 4; xNdx++) {
-      for (unsigned int yNdx = 3; yNdx < 4; yNdx++) {
+   for (unsigned int xNdx = 0; xNdx < WIDTH; xNdx++) {
+      for (unsigned int yNdx = 0; yNdx < HEIGHT; yNdx++) {
          Decimal x0(0U), y0(0U);
 
          x0 = startX + ((resolution * xNdx) / WIDTH);
