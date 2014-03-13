@@ -15,12 +15,14 @@ __global__ void iterate(data_t startX, data_t startY, data_t resolution, uint32_
    unsigned int yNdx = blockIdx.y * blockDim.y + threadIdx.y;
    unsigned int xNdx = blockIdx.x * blockDim.x + threadIdx.x;
 
-   if (xNdx < WIDTH && yNdx < HEIGHT) {
-      data_t x0(0U), y0(0U);
+   startX.clearDevice();
+   startY.clearDevice();
+   resolution.clearDevice();
 
+   if (xNdx < WIDTH && yNdx < HEIGHT) {
       uint32_t it=0;	
-      x0 = startX + ((resolution * xNdx) / WIDTH);
-      y0 = startY + ((resolution * yNdx) / HEIGHT);
+      data_t x0 = startX + ((resolution * xNdx) / WIDTH);
+      data_t y0 = startY + ((resolution * yNdx) / HEIGHT);
       data_t x = x0, y = y0;
       data_t xSqr((unsigned int) 0), ySqr((unsigned int) 0);
 

@@ -846,6 +846,11 @@ bool Number::isDevice() const {
    return onDevice;
 }
 
+__device__
+void Number::clearDevice() {
+   onDevice = false;
+}
+
 __host__ __device__
 bool Decimal::compare(const Decimal& a, bool lt) {
    if (negative != a.negative)
@@ -1175,4 +1180,10 @@ void Decimal::deviceFree() {
 #else
    return;
 #endif
+}
+
+__device__
+void Decimal::clearDevice() {
+   onDevice = false;
+   mantissa.clearDevice();
 }

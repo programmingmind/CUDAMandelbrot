@@ -258,6 +258,9 @@ public:
 
    HOST DEVICE
    bool isDevice() const;
+
+   DEVICE
+   void clearDevice();
 };
 
 class Decimal {
@@ -353,6 +356,9 @@ public:
 
    HOST
    void deviceFree();
+
+   DEVICE
+   void clearDevice();
 };
 
 #endif
