@@ -792,20 +792,25 @@ Number Number::absVal() {
    return *this;
 }
 
-__host__
+__host__ __device__
 Number Number::toDevice() const {
 #ifdef __CUDACC__
-   if (onDevice)
-      return *this;
+   #ifdef __CUDA__ARCH__
+    return *this;
+   #else
+      if (onDevice)
+         return *this;
 
-   Number t(MIN_BYTES);
-   free(t.data);
+      Number t(MIN_BYTES);
+      free(t.data);
 
-   t.numBytes = numBytes;
-   cudaMalloc(& (t.data), numBytes);
-   cudaMemcpy(t.data, data, numBytes, cudaMemcpyHostToDevice);
+      t.onDevice = true;
+      t.numBytes = numBytes;
+      cudaMalloc(& (t.data), numBytes);
+      cudaMemcpy(t.data, data, numBytes, cudaMemcpyHostToDevice);
 
-   return t;
+      return t;
+   #endif
 #else
    return *this;
 #endif
@@ -821,6 +826,11 @@ void Number::deviceFree() {
 #else
    return;
 #endif
+}
+
+__host__ __device__
+bool Number::isDevice() const {
+   return onDevice;
 }
 
 __host__ __device__
@@ -939,7 +949,7 @@ Decimal& Decimal::operator=(const Decimal& a) {
    onDevice = a.onDevice;
    negative = a.negative;
    exponent = a.exponent;
-   mantissa = a.onDevice ? a.mantissa.toDevice() : a.mantissa;
+   mantissa = (a.onDevice && !a.mantissa.isDevice()) ? a.mantissa.toDevice() : a.mantissa;
    return *this;
 }
 

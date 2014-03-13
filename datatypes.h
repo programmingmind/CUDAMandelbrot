@@ -250,11 +250,14 @@ public:
    HOST DEVICE
    Number absVal();
 
-   HOST
+   HOST DEVICE
    Number toDevice() const;
 
    HOST
    void deviceFree();
+
+   HOST DEVICE
+   bool isDevice() const;
 };
 
 class Decimal {
