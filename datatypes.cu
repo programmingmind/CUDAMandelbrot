@@ -254,7 +254,6 @@ __host__ __device__
 Number& Number::operator=(const Number& a) {
    if (this == &a)
       return *this;
-   onDevice = a.onDevice;
 
    if (a.onDevice) {
       numBytes = a.numBytes;
@@ -263,7 +262,6 @@ Number& Number::operator=(const Number& a) {
          free(data);
 
       data = a.data;
-      onDevice = a.onDevice;
    } else {
       if (onDevice) {
          numBytes = a.numBytes;
@@ -274,6 +272,8 @@ Number& Number::operator=(const Number& a) {
 
       memcpy(data, a.data, a.numBytes);
    }
+
+   onDevice = a.onDevice;
 
    return *this;
 }
@@ -471,7 +471,7 @@ Number Number::operator>>(const int a) const {
    memset(t.data, 0, t.numBytes);
 
    unsigned char *ptr = (unsigned char *) t.data;
-   
+
    if (bytes < numBytes)
       memcpy(ptr, ((char *) data) + bytes, numBytes - bytes);
 
