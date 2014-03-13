@@ -256,12 +256,20 @@ Number& Number::operator=(const Number& a) {
       return *this;
    onDevice = a.onDevice;
 
-   if (onDevice) {
+   if (a.onDevice) {
       numBytes = a.numBytes;
-      free(data);
+
+      if (! onDevice)
+         free(data);
+
       data = a.data;
+      onDevice = a.onDevice;
    } else {
-      if (numBytes < a.numBytes)
+      if (onDevice) {
+         numBytes = a.numBytes;
+         data = malloc(numBytes);
+      }
+      else if (numBytes < a.numBytes)
          resize(a.numBytes);
 
       memcpy(data, a.data, a.numBytes);
@@ -929,11 +937,16 @@ Decimal::Decimal(Number &n) : mantissa(n.getSize()) {
 }
 
 __host__ __device__
-Decimal::Decimal(const Decimal& d) : mantissa(d.mantissa.getSize()) {
+Decimal::Decimal(const Decimal& d) {
    onDevice = d.onDevice;
    negative = d.negative;
    exponent = d.exponent;
-   mantissa = d.mantissa;
+
+   if (d.onDevice) {
+      mantissa = d.mantissa.toDevice();
+   } else {
+      mantissa = d.mantissa;
+   }
 }
 
 __host__ __device__
