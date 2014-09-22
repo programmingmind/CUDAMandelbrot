@@ -1,5 +1,16 @@
 #include "common.h"
 
+static int numThreads = 1;
+
+int getNumThreads() {
+   return numThreads;
+}
+
+void setNumThreads(int t) {
+   if (t > 0)
+      numThreads = t;
+}
+
 inline uint32_t getColor(uint32_t it) {
    unsigned char R = (it>>2)&1 | (it>>4)&2 | (it>>6)&4 | (it>>8)&8 | (it>>10)&16;
    unsigned char G = (it>>1)&1 | (it>>3)&2 | (it>>5)&4 | (it>>7)&8 | (it>>9)&16;

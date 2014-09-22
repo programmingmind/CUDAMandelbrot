@@ -26,7 +26,6 @@ using namespace std;
 #define INITIAL_RESOLUTION 2.0
 
 #define MAX 65536
-#define DEPTH 15
 
 #define STD_DEV_RADIUS 5
 #define RANDOM_POOL_SIZE (1 << 2)
@@ -37,6 +36,10 @@ typedef struct {
    unsigned int xNdx;
    unsigned int yNdx;
 } StdDevInfo_t;
+
+int getNumThreads();
+
+void setNumThreads(int t);
 
 uint32_t getColor(uint32_t it);
 

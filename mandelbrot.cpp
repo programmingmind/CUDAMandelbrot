@@ -6,6 +6,9 @@ void updateScreen(int len, int xLen, int yLen, int gen, int xNdx, int yNdx) {
 }
 
 int main(int argc, char* argv[]) {
+   if (argc > 1)
+      setNumThreads(atoi(argv[1]));
+   
    int run = findCurrentRun();
    int len = ceil(log10(double (DEPTH)));
    int wLen = ceil(log10(double (WIDTH)));

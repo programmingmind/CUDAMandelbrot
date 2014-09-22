@@ -17,13 +17,13 @@ cuda: $(COMMON) cuda.cu datatypes.cu
 	$(CC) $(CCFLAGS) -DCUDA -o cuda cuda.o datatypes.o dlink.o $(COMMON) $(LDFLAGS) -lcudadevrt
 
 double: $(COMMON) cpu.cpp
-	$(CC) $(CCFLAGS) -o double $^
+	$(CC) $(CCFLAGS) -o double $^ -pthread
 
 longdoub: $(COMMON) cpu.cpp
-	$(CC) $(CCFLAGS) -DLONGDOUB -o longdoub $^
+	$(CC) $(CCFLAGS) -DLONGDOUB -o longdoub $^ -pthread
 
 quad: $(COMMON) cpu.cpp
-	$(CC) $(CCFLAGS) -DQUAD -o quad $^ -lquadmath
+	$(CC) $(CCFLAGS) -DQUAD -o quad $^ -lquadmath -pthread
 
 tests: tests.cpp datatypes.cu
 	nvcc $(NVFLAGS) -o datatypes.o datatypes.cu
