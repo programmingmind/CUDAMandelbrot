@@ -12,10 +12,10 @@ void setNumThreads(int t) {
 }
 
 inline uint32_t getColor(uint32_t it) {
-   unsigned char R = (it>>2)&1 | (it>>4)&2 | (it>>6)&4 | (it>>8)&8 | (it>>10)&16;
-   unsigned char G = (it>>1)&1 | (it>>3)&2 | (it>>5)&4 | (it>>7)&8 | (it>>9)&16;
-   unsigned char B = it&1 | (it>>2)&2 | (it>>4)&4 | (it>>6)&8 | (it>>8)&16 | (it>>10)&32;
-   return B<<2 | G<<11 | R<<19;
+   uint32_t R = ((it>>2)&1) | ((it>>4)&2) | ((it>>6)&4) | ((it>>8)&8) | ((it>>10)&16);
+   uint32_t G = ((it>>1)&1) | ((it>>3)&2) | ((it>>5)&4) | ((it>>7)&8) | ((it>>9) &16);
+   uint32_t B = ( it    &1) | ((it>>2)&2) | ((it>>4)&4) | ((it>>6)&8) | ((it>>8) &16) | ((it>>10)&32);
+   return (B<<2) | (G<<11) | (R<<19);
 }
 
 int findCurrentRun() {
@@ -190,8 +190,8 @@ void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolutio
    *xNdx = stdDevs[path].xNdx;
    *yNdx = stdDevs[path].yNdx;
 
-   *startX +=  (*resolution * stdDevs[path].xNdx) / ((unsigned int) WIDTH);
-   *startY +=  (*resolution * stdDevs[path].yNdx) / ((unsigned int) HEIGHT);
+   *startX +=  (*resolution * stdDevs[path].xNdx) >> DIM_POWER;
+   *startY +=  (*resolution * stdDevs[path].yNdx) >> DIM_POWER;
    
-   (*resolution) /= 2.0;
+   (*resolution) >>= 1;
 }

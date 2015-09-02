@@ -16,3 +16,12 @@
 *.bmp
 
 .DS_Store
+*.dSYM
+
+bftests
+cuda
+double
+longdoub
+quad
+tests
+fd

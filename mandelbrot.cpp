@@ -16,9 +16,13 @@ int main(int argc, char* argv[]) {
 
    int xNdx = WIDTH / 2, yNdx = HEIGHT / 2;
 
-   data_t startX = -1.50;
-	data_t startY = -1.00;
-	data_t resolution = INITIAL_RESOLUTION;
+   data_t startX;
+	data_t startY;
+	data_t resolution;
+
+   startX = -1.50;
+   startY = -1.00;
+   resolution = INITIAL_RESOLUTION;
 	
 	uint32_t iters[WIDTH * HEIGHT];
 
