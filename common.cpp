@@ -130,7 +130,7 @@ double Variance(uint32_t iters[], double mean, uint32_t count) {
    
    double sqrSum = 0.0;
    for (int i = 0; i < count; i++)
-      sqrSum = pow(mean - (double)iters[i], 2);
+      sqrSum += pow(mean - (double)iters[i], 2);
    
    return (sqrSum/(count-1));
 }
@@ -147,7 +147,7 @@ void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int c
       sum += iters[i];
    
    mean = (double) sum / (double) count;
-   variance = Variance(iters, sum, count);
+   variance = Variance(iters, mean, count);
    
    while (ndx > 0 && BetterZoom(stdDevs[ndx - 1].mean, stdDevs[ndx - 1].variance, mean, variance)) {
       if (ndx < RANDOM_POOL_SIZE)
