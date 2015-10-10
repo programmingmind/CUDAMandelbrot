@@ -167,7 +167,7 @@ void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int c
    }
 }
 
-void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolution, int *xNdx, int *yNdx) {
+void findPath(uint32_t *iters, int *xNdx, int *yNdx) {
    int count;
    uint32_t subIter[(2*STD_DEV_RADIUS+1)*(2*STD_DEV_RADIUS+1)];
    
@@ -200,9 +200,4 @@ void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolutio
    
    *xNdx = stdDevs[path].xNdx;
    *yNdx = stdDevs[path].yNdx;
-
-   *startX +=  (*resolution * stdDevs[path].xNdx) >> (DIM_POWER+1);
-   *startY +=  (*resolution * stdDevs[path].yNdx) >> (DIM_POWER+1);
-   
-   (*resolution) >>= 1;
 }
