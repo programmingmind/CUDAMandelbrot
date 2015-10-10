@@ -14,7 +14,8 @@
 #include <iostream>
 #include <iomanip>
 
-#define BF_SIZE 32
+#define BF_SIZE 16
+//#define BF_SIZE 32
 
 #define EQ 0
 #define GT 1

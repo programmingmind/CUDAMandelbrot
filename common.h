@@ -26,9 +26,11 @@ using namespace std;
 #define HEIGHT WIDTH
 #define INITIAL_RESOLUTION 2.0
 
-#define MAX 65536
+#define ITER_STEP 256
+#define MAX (ITER_STEP*4)
+//#define MAX 65536
 
-#define STD_DEV_RADIUS 5
+#define STD_DEV_RADIUS 3
 #define RANDOM_POOL_SIZE (1 << 2)
 
 typedef struct {
@@ -36,6 +38,7 @@ typedef struct {
    double mean;
    unsigned int xNdx;
    unsigned int yNdx;
+   unsigned int numNonMax;
 } StdDevInfo_t;
 
 int getNumThreads();

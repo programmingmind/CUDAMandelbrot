@@ -152,7 +152,7 @@ int base2Cmp(BigFloat *val, int32_t power) {
       return LT;
    }
 
-   power -= 1023;
+   power -= BF_SIZE*32 - 1;
    if (val->exponent < power) {
       return LT;
    } else if (val->exponent > power) {
@@ -280,20 +280,24 @@ BigFloat* sub(BigFloat *one, BigFloat *two, BigFloat *result) {
 
       if (i - ndxDiff < BF_SIZE) {
          uint64_t tmp = smaller->data[i] << bitDiff;
-         uint64_t lower = tmp & 0xFFFFFFFF;
-         uint64_t upper = tmp >> 32;
 
-         if (i - ndxDiff + 1 < BF_SIZE) {
+         if (i - ndxDiff + 1 < BF_SIZE && i - ndxDiff + 1 >= 0) { 
+            uint64_t upper = tmp >> 32;
+
             if (result->data[i - ndxDiff + 1] < upper) {
                carryToNdx(result, i - ndxDiff + 1);
             }
             result->data[i - ndxDiff + 1] -= upper;
          }
 
-         if (result->data[i - ndxDiff] < lower) {
-            carryToNdx(result, i - ndxDiff);
+         if (i - ndxDiff > 0) {
+            uint64_t lower = tmp & 0xFFFFFFFF;
+
+            if (result->data[i - ndxDiff] < lower) {
+               carryToNdx(result, i - ndxDiff);
+            }
+            result->data[i - ndxDiff] -= lower;
          }
-         result->data[i - ndxDiff] -= lower;
       }
    }
 
