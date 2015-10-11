@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
    int xNdx = WIDTH / 2, yNdx = HEIGHT / 2;
 
-   uint64_t xPos = 0, yPos = 0;
+   int64_t xPos = 0, yPos = 0;
 	
 	uint32_t iters[WIDTH * HEIGHT];
 
