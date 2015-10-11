@@ -1,5 +1,16 @@
 #include "BigFloat.h"
 
+#ifdef _WIN32
+#ifdef __CUDACC__
+
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
+#define HOST __host__
+#define DEVICE __device__
+#endif
+#endif
+
 typedef union {
   double d;
   struct {

@@ -2,8 +2,13 @@
 #define BIGFLOAT_H
 
 #ifdef __CUDACC__
+#ifdef _WIN32
+#define HOST
+#define DEVICE
+#else
 #define HOST __host__
 #define DEVICE __device__
+#endif
 #else
 #define HOST
 #define DEVICE

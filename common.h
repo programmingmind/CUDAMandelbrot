@@ -12,7 +12,13 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#if defined _MSC_VER
+#include <direct.h>
+#include "dirent.h"
+#elif defined __GNUC__
 #include <dirent.h>
+#endif
 
 #include <algorithm>
 #include <cmath>

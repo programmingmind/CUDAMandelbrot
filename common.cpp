@@ -28,7 +28,11 @@ int findCurrentRun() {
    int run = 0;
    if (stat("images", &st) == -1) {
       printf("images folder missing, creating it now\n");
+#if defined _MSC_VER
+      _mkdir("images");
+#else
       mkdir("images", 0755);
+#endif
    } else {
       printf("looking for previous runs...\n");
 
@@ -36,9 +40,9 @@ int findCurrentRun() {
 
       struct dirent *entry = readdir(dir);
       while (entry) {
-         if (entry->d_type == DT_DIR)
-            if (strncmp("run_", entry->d_name, 4) == 0)
-               run++;
+         if (strncmp("run_", entry->d_name, 4) == 0) {
+            run++;
+         }
 
          entry = readdir(dir);
       }
@@ -50,7 +54,11 @@ int findCurrentRun() {
    sprintf(path, "images/run_%04d", run);
 
    printf("creating folder %s for images\n", path);
+#if defined _MSC_VER
+   _mkdir(path);
+#else
    mkdir(path, 0755);
+#endif
    return run;
 }
 

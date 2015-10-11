@@ -27,3 +27,6 @@ longdoub
 quad
 tests
 fd
+
+Debug/
+Release/
