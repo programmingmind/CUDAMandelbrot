@@ -6,7 +6,7 @@ LDFLAGS=-L/usr/local/cuda/lib -L/usr/local/cuda/lib64 -lcuda -lcudart -Wl,-rpath
 
 COMMON=mandelbrot.cpp common.cpp
 
-all: cpu cuda tests bftests div
+all: cpu cuda bftests div
 
 cpu: double longdoub quad
 	# all cpu versions made
