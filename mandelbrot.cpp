@@ -28,10 +28,35 @@ int main(int argc, char* argv[]) {
 
    printf("\n");
    updateScreen(len, wLen, hLen, 0, xNdx, yNdx);
-   for (int i = 0; i < DEPTH; i++) {
+   for (int i = 0; i < DBL_LIMIT; i++) {
+      double resolution = INITIAL_RESOLUTION;
+      resolution /= (1 << i);
+
+      double startX = INITIAL_X + (resolution * xPos) / WIDTH;
+      double startY = INITIAL_Y + (resolution * yPos) / HEIGHT;
+
+      cout << xPos << "\t" << yPos << "\t" << startX << "\t" << startY << endl;
+
+	   DoubleMandelbrot(startX, startY, resolution, iters);
+		saveImage(run, len, i, iters);
+		findPath(iters, &xNdx, &yNdx);
+
+		xPos += xNdx;
+		yPos += yNdx;
+
+		xPos *= 2;
+		yPos *= 2;
+
+		xPos -= WIDTH/2;
+		yPos -= HEIGHT/2;
+
+      updateScreen(len, wLen, hLen, i + 1, xNdx, yNdx);
+	}
+
+   for (int i = DBL_LIMIT; i < DEPTH; i++) {
       data_t resolution;
       resolution = INITIAL_RESOLUTION;
-      resolution >>= DEPTH;
+      resolution >>= i;
 
       data_t startX = (resolution * xPos) >> DIM_POWER;
       data_t startY = (resolution * yPos) >> DIM_POWER;
@@ -54,7 +79,6 @@ int main(int argc, char* argv[]) {
 
       updateScreen(len, wLen, hLen, i + 1, xNdx, yNdx);
 	}
-
    printf("\n");
 	
    return 0;

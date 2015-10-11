@@ -3,6 +3,9 @@
 
 #define cudaSafe(ans) { cudaAssert((ans), __FILE__, __LINE__); }
 
+#define numBlocks  2048
+#define numThreads 64
+
 inline void cudaAssert(cudaError_t code, const char *file, int line, bool abort=true) {
    if (code != cudaSuccess) {
       fprintf(stderr,"cudaAssert: %s %s %d\n", cudaGetErrorString(code), file, line);
@@ -80,9 +83,34 @@ __global__ void iterate(BigFloat *originals, BigFloat *vals, uint32_t *iters, ui
    }
 }
 
+__global__ void doubleIter(double startX, double startY, double resolution, uint32_t *iters) {
+   unsigned int ndx = blockIdx.x * blockDim.x + threadIdx.x;
+   unsigned int yNdx, xNdx;
+
+   uint32_t it;
+   double x0, y0, x, y, xSqr, ySqr;
+
+   while (ndx < WIDTH*HEIGHT) {
+      xNdx = ndx & ((1<<DIM_POWER)-1);
+      yNdx = ndx >> DIM_POWER;
+      
+      it=0;
+      x0 = x = startX + xNdx * resolution / WIDTH;
+      y0 = y = startY + yNdx * resolution / HEIGHT;
+	
+   	while ((it < MAX) && ((xSqr = x*x) + (ySqr = y*y) <= 4)) {
+   	   y = 2*x*y + y0;
+   		x = xSqr - ySqr + x0;
+   		it++;
+   	}
+	
+	   iters[ndx] = it;
+
+	   ndx += gridDim.x * blockDim.x;
+	}
+}
+
 void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
-   const int numBlocks  = 2048;
-   const int numThreads = 64;
    BigFloat *originals, *vals;
    uint32_t *cuda;
    const int size = WIDTH * HEIGHT * sizeof(uint32_t);
@@ -108,5 +136,18 @@ void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
    cudaSafe(cudaFree(cuda));
    cudaSafe(cudaFree(originals));
    cudaSafe(cudaFree(vals));
+}
+
+void DoubleMandelbrot(double startX, double startY, double resolution, uint32_t *iters) {
+   uint32_t *cuda;
+   const int size = WIDTH * HEIGHT * sizeof(uint32_t);
+
+   cudaSafe(cudaMalloc(&cuda, size));
+
+   doubleIter<<<numBlocks, numThreads>>>(startX, startY, resolution, cuda);
+   cudaSafe(cudaPeekAtLastError());
+
+   cudaSafe(cudaMemcpy(iters, cuda, size, cudaMemcpyDeviceToHost));
+   cudaSafe(cudaFree(cuda));
 }
 
