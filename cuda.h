@@ -5,7 +5,6 @@
 
 typedef BigFloat data_t;
 
-#define BLOCK_LEN 8
 #define DBL_LIMIT 15
 #define DEPTH 100
 
