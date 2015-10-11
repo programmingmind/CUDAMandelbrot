@@ -12,10 +12,14 @@ void setNumThreads(int t) {
 }
 
 inline uint32_t getColor(uint32_t it) {
-   unsigned char R = (it>>2)&1 | (it>>4)&2 | (it>>6)&4 | (it>>8)&8 | (it>>10)&16;
-   unsigned char G = (it>>1)&1 | (it>>3)&2 | (it>>5)&4 | (it>>7)&8 | (it>>9)&16;
-   unsigned char B = it&1 | (it>>2)&2 | (it>>4)&4 | (it>>6)&8 | (it>>8)&16 | (it>>10)&32;
-   return B<<2 | G<<11 | R<<19;
+   if (it == MAX) {
+      return 0;
+   }
+
+   uint32_t R = ((it>>2)&1) | ((it>>4)&2) | ((it>>6)&4) | ((it>>8)&8) | ((it>>10)&16);
+   uint32_t G = ((it>>1)&1) | ((it>>3)&2) | ((it>>5)&4) | ((it>>7)&8) | ((it>>9) &16);
+   uint32_t B = ( it    &1) | ((it>>2)&2) | ((it>>4)&4) | ((it>>6)&8) | ((it>>8) &16) | ((it>>10)&32);
+   return (B<<2) | (G<<11) | (R<<19);
 }
 
 int findCurrentRun() {
@@ -24,7 +28,11 @@ int findCurrentRun() {
    int run = 0;
    if (stat("images", &st) == -1) {
       printf("images folder missing, creating it now\n");
+#if defined _MSC_VER
+      _mkdir("images");
+#else
       mkdir("images", 0755);
+#endif
    } else {
       printf("looking for previous runs...\n");
 
@@ -32,9 +40,9 @@ int findCurrentRun() {
 
       struct dirent *entry = readdir(dir);
       while (entry) {
-         if (entry->d_type == DT_DIR)
-            if (strncmp("run_", entry->d_name, 4) == 0)
-               run++;
+         if (strncmp("run_", entry->d_name, 4) == 0) {
+            run++;
+         }
 
          entry = readdir(dir);
       }
@@ -46,7 +54,11 @@ int findCurrentRun() {
    sprintf(path, "images/run_%04d", run);
 
    printf("creating folder %s for images\n", path);
+#if defined _MSC_VER
+   _mkdir(path);
+#else
    mkdir(path, 0755);
+#endif
    return run;
 }
 
@@ -120,8 +132,9 @@ void saveImage(int run, int len, int num, uint32_t *iters) {
    image.close();
 }
 
-inline bool BetterZoom(double oMean, double oVar, double nMean, double nVar) {
-   return nVar > oVar;
+inline bool BetterZoom(StdDevInfo_t *original, StdDevInfo_t *comp) {
+   return     pow(comp->variance, 3.0) *     comp->numNonMax > 
+          pow(original->variance, 3.0) * original->numNonMax;
 }
 
 double Variance(uint32_t iters[], double mean, uint32_t count) {
@@ -130,26 +143,25 @@ double Variance(uint32_t iters[], double mean, uint32_t count) {
    
    double sqrSum = 0.0;
    for (int i = 0; i < count; i++)
-      sqrSum = pow(mean - (double)iters[i], 2);
+      sqrSum += pow(mean - (double)iters[i], 2);
    
    return (sqrSum/(count-1));
 }
 
-void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int count, int xNdx, int yNdx) {
+void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int count, StdDevInfo_t *curInfo) {
    if (count == 0)
       return;
    
    uint32_t sum = 0;
    int ndx = *varCount;
-   double mean, variance;
    
    for (int i = 0; i < count; i++)
       sum += iters[i];
    
-   mean = (double) sum / (double) count;
-   variance = Variance(iters, sum, count);
-   
-   while (ndx > 0 && BetterZoom(stdDevs[ndx - 1].mean, stdDevs[ndx - 1].variance, mean, variance)) {
+   curInfo->mean = (double) sum / (double) count;
+   curInfo->variance = Variance(iters, curInfo->mean, count);
+
+   while (ndx > 0 && BetterZoom(&stdDevs[ndx - 1], curInfo)) {
       if (ndx < RANDOM_POOL_SIZE)
          stdDevs[ndx] = stdDevs[ndx - 1];
       ndx--;
@@ -159,29 +171,36 @@ void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int c
       if (*varCount < RANDOM_POOL_SIZE)
          ++*varCount;
       
-      stdDevs[ndx].variance = variance;
-      stdDevs[ndx].mean = mean;
-      stdDevs[ndx].xNdx = xNdx;
-      stdDevs[ndx].yNdx = yNdx;
+      stdDevs[ndx] = *curInfo;
    }
 }
 
-void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolution, int *xNdx, int *yNdx) {
+void findPath(uint32_t *iters, int *xNdx, int *yNdx) {
    int count;
    uint32_t subIter[(2*STD_DEV_RADIUS+1)*(2*STD_DEV_RADIUS+1)];
    
    StdDevInfo_t stdDevs[RANDOM_POOL_SIZE];
+   StdDevInfo_t curInfo;
    int varCount = 0;
-   
-   for (int i = 0; i < HEIGHT; i++) {
-      for (int j = 0; j < WIDTH; j++) {
+
+   for (int i = STD_DEV_RADIUS; i < HEIGHT - 1 - STD_DEV_RADIUS; i++) {
+      curInfo.yNdx = i;
+
+      for (int j = STD_DEV_RADIUS; j < WIDTH - 1 - STD_DEV_RADIUS; j++) {
+         curInfo.xNdx = j;
+
          count = 0;
-         
-         for (int k = max(0, i - STD_DEV_RADIUS); k <= min<int>(HEIGHT - 1, i + STD_DEV_RADIUS); k++)
-            for (int l = max(0, j - STD_DEV_RADIUS); l <= min<int>(WIDTH - 1, j + STD_DEV_RADIUS); l++)
+         curInfo.numNonMax = 0;
+         for (int k = i - STD_DEV_RADIUS; k <= i + STD_DEV_RADIUS; k++) {
+            for (int l = j - STD_DEV_RADIUS; l <= j + STD_DEV_RADIUS; l++) {
                subIter[count++] = getColor(iters[k * WIDTH + l]);
+               if (iters[k * WIDTH + l] != MAX) {
+                  curInfo.numNonMax++;
+               }
+            }
+         }
          
-         insertSorted(stdDevs, &varCount, subIter, count, j, i);
+         insertSorted(stdDevs, &varCount, subIter, count, &curInfo);
       }
    }
    
@@ -189,9 +208,4 @@ void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolutio
    
    *xNdx = stdDevs[path].xNdx;
    *yNdx = stdDevs[path].yNdx;
-
-   *startX +=  (*resolution * stdDevs[path].xNdx) / ((unsigned int) WIDTH);
-   *startY +=  (*resolution * stdDevs[path].yNdx) / ((unsigned int) HEIGHT);
-   
-   (*resolution) /= 2.0;
 }

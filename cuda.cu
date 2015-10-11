@@ -3,7 +3,10 @@
 
 #define cudaSafe(ans) { cudaAssert((ans), __FILE__, __LINE__); }
 
-inline void cudaAssert(cudaError_t code, char *file, int line, bool abort=true) {
+#define numBlocks  2048
+#define numThreads 64
+
+inline void cudaAssert(cudaError_t code, const char *file, int line, bool abort=true) {
    if (code != cudaSuccess) {
       fprintf(stderr,"cudaAssert: %s %s %d\n", cudaGetErrorString(code), file, line);
       if (abort)
@@ -11,53 +14,140 @@ inline void cudaAssert(cudaError_t code, char *file, int line, bool abort=true) 
    }
 }
 
-__global__ void iterate(data_t startX, data_t startY, data_t resolution, uint32_t *iters) {
-   unsigned int yNdx = blockIdx.y * blockDim.y + threadIdx.y;
-   unsigned int xNdx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void init(BigFloat startX, BigFloat startY, BigFloat resolution, BigFloat *vals) {
+   unsigned int ndx = blockIdx.x * blockDim.x + threadIdx.x;
+   unsigned int yNdx, xNdx;
 
-   startX.clearDevice();
-   startY.clearDevice();
-   resolution.clearDevice();
+   BigFloat *x0;
+   BigFloat *y0;
+   BigFloat x;
+   BigFloat y;
+   BigFloat temp;
+   BigFloat multTemp;
 
-   if (xNdx < WIDTH && yNdx < HEIGHT) {
-      uint32_t it=0;	
-      data_t x0 = startX + ((resolution * xNdx) / WIDTH);
-      data_t y0 = startY + ((resolution * yNdx) / HEIGHT);
-      data_t x = x0, y = y0;
-      data_t xSqr((unsigned int) 0), ySqr((unsigned int) 0);
+   while (ndx < WIDTH*HEIGHT) {
+      xNdx = ndx & ((1<<DIM_POWER)-1);
+      yNdx = ndx >> DIM_POWER;
 
-      while (((xSqr = x*x) + (ySqr = y*y) <= 4) && (it < MAX)) {
-         y = x*y*((unsigned int) 2) + y0;
-         x = xSqr - ySqr + x0;
-         it++;
-      }
+      x0 = vals + (ndx*2+0);
+      y0 = vals + (ndx*2+1);
+      
+      add(&startX, shiftR(mult(&resolution, init(&temp, xNdx), &x, &multTemp), DIM_POWER), x0);
+      add(&startY, shiftR(mult(&resolution, init(&temp, yNdx), &y, &multTemp), DIM_POWER), y0);
 
-      iters[yNdx * WIDTH + xNdx] =  it;
+      ndx += gridDim.x * blockDim.x;
    }
 }
 
+__global__ void iterate(BigFloat *originals, BigFloat *vals, uint32_t *iters, uint32_t lastLimit, uint32_t limit) {
+   unsigned int ndx = blockIdx.x * blockDim.x + threadIdx.x;
+
+   uint32_t it;
+   BigFloat x0;
+   BigFloat y0;
+   BigFloat x;
+   BigFloat y;
+   BigFloat xSqr;
+   BigFloat ySqr;
+   BigFloat temp;
+   BigFloat multTemp;
+
+   while (ndx < WIDTH*HEIGHT) {
+      x0 = originals[ndx*2+0];
+      y0 = originals[ndx*2+1];
+      x  =      vals[ndx*2+0];
+      y  =      vals[ndx*2+1];
+
+      if (lastLimit) {
+         it = iters[ndx];
+         if (it < lastLimit) {
+            continue;
+         }
+      } else {
+         it = 0;
+         x = x0;
+         y = y0;
+      }
+
+      while (it < limit && base2Cmp(add(mult(&x, &x, &xSqr, &multTemp), mult(&y, &y, &ySqr, &multTemp), &temp), 2) != GT) {
+         (void)add(&y0, shiftL(mult(&x, &y, &temp, &multTemp), 1), &y);
+         (void)add(sub(&xSqr, &ySqr, &temp), &x0, &x);
+         it++;
+      }
+
+      iters[ndx] =  it;
+      vals[ndx*2+0] = x;
+      vals[ndx*2+1] = y;
+
+      ndx += gridDim.x * blockDim.x;
+   }
+}
+
+__global__ void doubleIter(double startX, double startY, double resolution, uint32_t *iters) {
+   unsigned int ndx = blockIdx.x * blockDim.x + threadIdx.x;
+   unsigned int yNdx, xNdx;
+
+   uint32_t it;
+   double x0, y0, x, y, xSqr, ySqr;
+
+   while (ndx < WIDTH*HEIGHT) {
+      xNdx = ndx & ((1<<DIM_POWER)-1);
+      yNdx = ndx >> DIM_POWER;
+      
+      it=0;
+      x0 = x = startX + xNdx * resolution / WIDTH;
+      y0 = y = startY + yNdx * resolution / HEIGHT;
+	
+   	while ((it < MAX) && ((xSqr = x*x) + (ySqr = y*y) <= 4)) {
+   	   y = 2*x*y + y0;
+   		x = xSqr - ySqr + x0;
+   		it++;
+   	}
+	
+	   iters[ndx] = it;
+
+	   ndx += gridDim.x * blockDim.x;
+	}
+}
+
 void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
+   BigFloat *originals, *vals;
    uint32_t *cuda;
-   int size = WIDTH * HEIGHT * sizeof(uint32_t);
+   const int size = WIDTH * HEIGHT * sizeof(uint32_t);
+
    cudaSafe(cudaMalloc(&cuda, size));
+   cudaSafe(cudaMalloc(&originals, WIDTH*HEIGHT*2*sizeof(BigFloat)));
+   cudaSafe(cudaMalloc(&vals,      WIDTH*HEIGHT*2*sizeof(BigFloat)));
 
-   dim3 dimGrid(1 + (WIDTH - 1)/BLOCK_LEN, 1 + (HEIGHT - 1)/BLOCK_LEN);
-   dim3 dimBlock(BLOCK_LEN, BLOCK_LEN);
-
-   data_t dX = x.toDevice();
-   data_t dY = y.toDevice();
-   data_t dR = resolution.toDevice();
-
-   cudaDeviceSetLimit(cudaLimitStackSize, 1024*6);
-   cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1073741824);
-   iterate<<<dimGrid, dimBlock>>>(dX, dY, dR, cuda);
+   cudaDeviceSetLimit(cudaLimitStackSize, 8*sizeof(BigFloat) + 1024);
+   init<<<numBlocks, numThreads>>>(x, y, resolution, originals);
    cudaSafe(cudaPeekAtLastError());
    cudaSafe(cudaDeviceSynchronize());
 
-   dX.deviceFree();
-   dY.deviceFree();
-   dR.deviceFree();
+   int lastLimit = 0;
+   for (int limit = ITER_STEP; limit <= MAX; limit += ITER_STEP) {
+      std::cout<<limit<<std::endl;
+      iterate<<<numBlocks, numThreads>>>(originals, vals, cuda, lastLimit, limit);
+      cudaSafe(cudaPeekAtLastError());
+      cudaSafe(cudaDeviceSynchronize());
+   }
+
+   cudaSafe(cudaMemcpy(iters, cuda, size, cudaMemcpyDeviceToHost));
+   cudaSafe(cudaFree(cuda));
+   cudaSafe(cudaFree(originals));
+   cudaSafe(cudaFree(vals));
+}
+
+void DoubleMandelbrot(double startX, double startY, double resolution, uint32_t *iters) {
+   uint32_t *cuda;
+   const int size = WIDTH * HEIGHT * sizeof(uint32_t);
+
+   cudaSafe(cudaMalloc(&cuda, size));
+
+   doubleIter<<<numBlocks, numThreads>>>(startX, startY, resolution, cuda);
+   cudaSafe(cudaPeekAtLastError());
 
    cudaSafe(cudaMemcpy(iters, cuda, size, cudaMemcpyDeviceToHost));
    cudaSafe(cudaFree(cuda));
 }
+

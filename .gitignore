@@ -15,4 +15,18 @@
 # Image files
 *.bmp
 
+*.swp
+
 .DS_Store
+*.dSYM
+
+bftests
+cuda
+double
+longdoub
+quad
+tests
+fd
+
+Debug/
+Release/

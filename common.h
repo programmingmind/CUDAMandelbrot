@@ -12,7 +12,13 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#if defined _MSC_VER
+#include <direct.h>
+#include "dirent.h"
+#elif defined __GNUC__
 #include <dirent.h>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -21,13 +27,19 @@
 
 using namespace std;
 
-#define WIDTH 480U
+#define DIM_POWER 9
+#define WIDTH (1 << DIM_POWER)
 #define HEIGHT WIDTH
+
 #define INITIAL_RESOLUTION 2.0
+#define INITIAL_X -1.50
+#define INITIAL_Y -1.00
 
-#define MAX 65536
+#define ITER_STEP 256
+#define MAX (ITER_STEP*4)
+//#define MAX 65536
 
-#define STD_DEV_RADIUS 5
+#define STD_DEV_RADIUS 3
 #define RANDOM_POOL_SIZE (1 << 2)
 
 typedef struct {
@@ -35,6 +47,7 @@ typedef struct {
    double mean;
    unsigned int xNdx;
    unsigned int yNdx;
+   unsigned int numNonMax;
 } StdDevInfo_t;
 
 int getNumThreads();
@@ -53,6 +66,6 @@ double Variance(uint32_t iters[], double mean, uint32_t count);
 
 void insertSorted(StdDevInfo_t stdDevs[], int *varCount, uint32_t iters[], int count, int xNdx, int yNdx);
 
-void findPath(uint32_t *iters, data_t *startX, data_t *startY, data_t *resolution, int *xNdx, int *yNdx);
+void findPath(uint32_t *iters, int *xNdx, int *yNdx);
 
 #endif
