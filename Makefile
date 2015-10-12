@@ -1,4 +1,11 @@
 CC=g++
+CCQUAD=CC
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	CCQUAD=g++-5
+endif
+
 NVARCH=-gencode arch=compute_20,code=sm_20 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode arch=compute_50,code=sm_50
 NVFLAGS=-O3 -lineinfo -g -c $(NVARCH)
 CCFLAGS=-O3 -g
@@ -17,13 +24,13 @@ cuda: $(COMMON) cuda.cu BigFloat.cu common.h
 	$(CC) $(CCFLAGS) -DCUDA -o cuda cuda.o BigFloat.o dlink.o $(COMMON) $(LDFLAGS) -lcudadevrt
 
 double: $(COMMON) cpu.cpp common.h
-	$(CC) $(CCFLAGS) -o double $^ -pthread
+	$(CC) $(CCFLAGS) -o double $(COMMON) cpu.cpp  -pthread
 
 longdoub: $(COMMON) cpu.cpp common.h
-	$(CC) $(CCFLAGS) -DLONGDOUB -o longdoub $^ -pthread
+	$(CC) $(CCFLAGS) -DLONGDOUB -o longdoub $(COMMON) cpu.cpp -pthread
 
 quad: $(COMMON) cpu.cpp common.h
-	$(CC) $(CCFLAGS) -DQUAD -o quad $^ -lquadmath -pthread
+	$(CCQUAD) $(CCFLAGS) -DQUAD -o quad $(COMMON) cpu.cpp -lquadmath -pthread
 
 tests: tests.cpp BigFloat.cu
 	nvcc $(NVFLAGS) -o BigFloat.o BigFloat.cu

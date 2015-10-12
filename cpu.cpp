@@ -11,7 +11,7 @@ typedef struct {
 } posInfo;
 
 static int col;
-static pthread_mutex_t mutex;
+static pthread_mutex_t mut;
 
 uint32_t numIter(data_t x, data_t y) {
    uint32_t it=0;	
@@ -35,9 +35,9 @@ void *calcRow(void *arg) {
    uint32_t *iters = ((posInfo *) arg)->iters;
 
    while (1) {
-      pthread_mutex_lock(&mutex);
+      pthread_mutex_lock(&mut);
       int i = col++;
-      pthread_mutex_unlock(&mutex);
+      pthread_mutex_unlock(&mut);
       if (i >= HEIGHT)
          return NULL;
 
@@ -51,7 +51,7 @@ void *calcRow(void *arg) {
 void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
    posInfo info = {x, y, resolution, iters};
    col = 0;
-   pthread_mutex_init(&mutex, NULL);
+   pthread_mutex_init(&mut, NULL);
 
    int numThreads = getNumThreads();
    pthread_t *threads = (pthread_t*) malloc(numThreads * sizeof(pthread_t));
@@ -64,6 +64,6 @@ void Mandelbrot(data_t x, data_t y, data_t resolution, uint32_t *iters) {
       pthread_join(threads[i], NULL);
    }
 
-   pthread_mutex_destroy(&mutex);
+   pthread_mutex_destroy(&mut);
    free(threads);
 }
